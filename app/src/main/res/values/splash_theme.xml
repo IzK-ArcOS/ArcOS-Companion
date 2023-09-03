@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources> <!-- Add if needing targetApi: xmlns:tools="http://schemas.android.com/tools" -->
+    <!-- Splash Screen Theme. -->
+    <style name="Theme.ArcOSCompanion.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/light_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/app_icon_foreground</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="postSplashScreenTheme">@style/Theme.ArcOSCompanion</item>
+
+        <!-- Status bar and Nav bar configs -->
+        <!--item name="android:statusBarColor" tools:targetApi="l">@color/light_background</item-->
+        <item name="android:statusBarColor">@color/light_background</item>
+        <item name="android:navigationBarColor">@color/light_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
