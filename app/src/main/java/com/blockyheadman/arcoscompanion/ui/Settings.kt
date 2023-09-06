@@ -21,28 +21,35 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.vibrator
-
-object Settings {
-    var dynamicColor = mutableStateOf(false)
-    var darkThemeEnabled = mutableStateOf(0)
-}
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsPage(externalPadding: PaddingValues) {
+    val context = LocalContext.current
+
+    val store = UserPreferences(context)
+
     var showThemeDialog by remember { mutableStateOf(false) }
-    var dynamicColor by remember { Settings.dynamicColor }
-    var darkThemeEnabled by remember { Settings.darkThemeEnabled }
+    //var dynamicColor by remember { Settings.dynamicColor }
+    //var darkThemeEnabled by remember { Settings.darkThemeEnabled }
+    val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
+    val dynamicColor = store.getMaterialYouMode.collectAsState(initial = false)
 
     Column (
         modifier = Modifier.padding(externalPadding)
@@ -52,8 +59,11 @@ fun SettingsPage(externalPadding: PaddingValues) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Switch(checked = dynamicColor, onCheckedChange = {
-                dynamicColor = !dynamicColor
+            Switch(checked = dynamicColor.value, onCheckedChange = {
+                //dynamicColor = !dynamicColor
+                CoroutineScope(Dispatchers.IO).launch {
+                    store.saveMaterialYouMode(!dynamicColor.value)
+                }
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
             })
             Spacer(Modifier.size(5.dp))
@@ -102,27 +112,36 @@ fun SettingsPage(externalPadding: PaddingValues) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("System Theme")
                         RadioButton(
-                            selected = darkThemeEnabled == 0,
+                            selected = darkThemeEnabled.value == 0,
                             onClick = {
-                                darkThemeEnabled = 0
+                                //darkThemeEnabled = 0
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    store.saveThemeMode(0)
+                                }
                                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                             })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Light Theme")
                         RadioButton(
-                            selected = darkThemeEnabled == 1,
+                            selected = darkThemeEnabled.value == 1,
                             onClick = {
-                                darkThemeEnabled = 1
+                                //darkThemeEnabled = 1
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    store.saveThemeMode(1)
+                                }
                                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                             })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Dark Theme")
                         RadioButton(
-                            selected = darkThemeEnabled == 2,
+                            selected = darkThemeEnabled.value == 2,
                             onClick = {
-                                darkThemeEnabled = 2
+                                //darkThemeEnabled = 2
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    store.saveThemeMode(2)
+                                }
                                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                             })
                     }
