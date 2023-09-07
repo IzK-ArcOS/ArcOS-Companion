@@ -8,7 +8,7 @@ import retrofit2.http.Header
 interface APIService {
     //@Headers("Authorization: Blocky:BlockyArcOS#23")
     @GET("/auth")
-    suspend fun getAuth(@Header("Authorization") auth: String): TokenResponse
+    suspend fun getAuth(@Header("authorization") auth: String): TokenResponse
 
     companion object {
         var apiService: APIService? = null

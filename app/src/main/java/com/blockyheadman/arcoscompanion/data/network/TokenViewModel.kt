@@ -7,21 +7,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.launch
 
 data class TokenData(
+    @SerializedName(value = "username")
     val username: String,
+    @SerializedName(value = "token")
     val token: String
 )
 
 data class TokenError(
+    @SerializedName(value = "title")
     val title: String,
+    @SerializedName(value = "message")
     val message: String
 )
 
 data class TokenResponse(
+    @SerializedName(value = "data")
     val data: TokenData,
+    @SerializedName(value = "valid")
     val valid: Boolean,
+    @SerializedName(value = "error")
     val error: TokenError
 )
 
@@ -34,17 +42,13 @@ class TokenViewModel : ViewModel() {
             val apiService = APIService.getInstance(apiName)
             try {
                 token = apiService.getAuth(
-                    Base64.encode("Blocky".toByteArray(), Base64.DEFAULT).toString() +
-                        ":" +
-                        Base64.encode("NiceTry".toByteArray(), Base64.DEFAULT).toString()
+                    "Basic " + Base64.encodeToString("Blocky:BlockyArcOS#23".toByteArray(), Base64.NO_WRAP)
                 )
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
                 //token = "${e.message}"
             }
-            Log.i("GetToken", Base64.encode("Blocky".toByteArray(), Base64.DEFAULT).toString() +
-                    ":" +
-                    Base64.encode("NiceTry".toByteArray(), Base64.DEFAULT).toString())
+            Log.i("GetToken", "Basic " + Base64.encodeToString("Blocky:BlockyArcOS#23".toByteArray(), Base64.NO_WRAP) )
         }
     }
 }

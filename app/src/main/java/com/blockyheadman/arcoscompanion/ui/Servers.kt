@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.blockyheadman.arcoscompanion.data.network.TokenResponse
 import com.blockyheadman.arcoscompanion.data.network.TokenViewModel
 import com.blockyheadman.arcoscompanion.vibrator
 
@@ -79,7 +80,8 @@ fun ServersPage(externalPadding: PaddingValues) {
             contentAlignment = Alignment.Center
         ) {
             if (tokenViewModel.errorMessage.isEmpty()) {
-                Text(tokenViewModel.token.toString())
+                var tokenData: TokenResponse? = tokenViewModel.token
+                Text(tokenData?.valid.toString())
                 //Text("Auth Success!")
             } else {
                 Text(tokenViewModel.errorMessage)
