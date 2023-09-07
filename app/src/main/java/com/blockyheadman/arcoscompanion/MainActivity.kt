@@ -15,7 +15,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.blockyheadman.arcoscompanion.data.UserPreferences
@@ -227,10 +227,7 @@ fun Greeting() {
     }
     val context = LocalContext.current
 
-    Box (
-        Modifier.fillMaxSize(),
-        Alignment.Center
-    ) {
+    Dialog ({}) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,6 +283,7 @@ fun Greeting() {
         }
     }
 }
+
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)
 @Composable
 fun DarkGreetingPreview() {

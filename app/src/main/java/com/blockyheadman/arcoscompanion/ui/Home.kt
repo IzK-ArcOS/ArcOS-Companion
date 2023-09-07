@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun HomePage(externalPadding: PaddingValues) {
@@ -17,6 +18,9 @@ fun HomePage(externalPadding: PaddingValues) {
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Welcome!\nThere's not much to see here..")
+        Text(
+            text = "Welcome!\nThere's not much to see here..",
+            textAlign = TextAlign.Center
+        )
     }
 }
