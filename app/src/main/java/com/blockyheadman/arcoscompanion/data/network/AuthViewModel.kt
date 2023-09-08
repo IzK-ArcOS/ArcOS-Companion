@@ -38,12 +38,12 @@ class AuthViewModel : ViewModel() {
     var auth: AuthResponse? = null
     var errorMessage: String by mutableStateOf("")
 
-    fun getToken(apiName: String) {
+    fun getToken(apiName: String, username: String, password: String) {
         viewModelScope.launch {
             val apiService = APIService.getInstance(apiName)
             try {
                 val json = Gson().toJson(apiService.getAuth(
-                    "Basic " + Base64.encodeToString("Blocky:BlockyArcOS#23".toByteArray(), Base64.NO_WRAP)
+                    "Basic " + Base64.encodeToString("$username:$password".toByteArray(), Base64.NO_WRAP)
                 ))
                 Log.d("JSONOutput", json)
                 auth = Gson().fromJson(json, AuthResponse::class.java)

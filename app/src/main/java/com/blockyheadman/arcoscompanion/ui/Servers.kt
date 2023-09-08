@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -47,8 +48,10 @@ import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.data.network.AuthViewModel
 import com.blockyheadman.arcoscompanion.vibrator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,7 +115,6 @@ fun ServersPage(externalPadding: PaddingValues) {
                     val focusManager = LocalFocusManager.current
 
                     var apiInput by rememberSaveable { mutableStateOf("") }
-                    var apiInputError = false
                     var usernameInput by rememberSaveable { mutableStateOf("") }
                     var passwordInput by rememberSaveable { mutableStateOf("") }
 
@@ -148,7 +150,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
                             ),
                             placeholder = { Text("ex: community") },
-                            isError = apiInputError,
+                            isError = apiInput.isEmpty(),
                             singleLine = true
                         )
 
@@ -165,6 +167,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                             keyboardActions = KeyboardActions(
                                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
                             ),
+                            isError = usernameInput.isEmpty(),
                             singleLine = true
                         )
 
@@ -181,6 +184,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                             keyboardActions = KeyboardActions(
                                 onDone = { focusManager.clearFocus() }
                             ),
+                            isError = passwordInput.isEmpty(),
                             visualTransformation = PasswordVisualTransformation(),
                             singleLine = true
                         )
@@ -197,14 +201,14 @@ fun ServersPage(externalPadding: PaddingValues) {
                                     VibrationEffect.EFFECT_DOUBLE_CLICK
                                 )
                             )
-
-
-
-                        }) {
+                        },
+                        enabled = !apiInput.isEmpty() && !usernameInput.isEmpty() && !passwordInput.isEmpty()
+                        ) {
                             Text("OK")
                         }
 
                         if (buttonClicked) {
+
                             val authRequest = AuthViewModel()
 
                             /*LaunchedEffect(Unit, block = {
@@ -213,8 +217,19 @@ fun ServersPage(externalPadding: PaddingValues) {
                             
                             LaunchedEffect(authRequest) {
                                 coroutineScope {
-                                    launch { authRequest.getToken(apiInput) }
+                                    val authResponse = async { authRequest.getToken(apiInput, usernameInput, passwordInput) }
+
+                                    withContext(Dispatchers.Main) {
+
+                                    }
                                 }
+                            }
+
+                            while (authRequest.auth?.data?.token?.isEmpty() == true) {
+                                Dialog(onDismissRequest = {  }) {
+                                    CircularProgressIndicator()
+                                }
+
                             }
 
                             if (authRequest.errorMessage.isEmpty()) {
@@ -244,5 +259,13 @@ fun ServersPage(externalPadding: PaddingValues) {
                 }
             }
         }
+    }
+}
+
+suspend fun test(authRequest: AuthViewModel, apiInput: String, usernameInput: String, passwordInput: String) = coroutineScope {
+    val authResponse = async { authRequest.getToken(apiInput, usernameInput, passwordInput) }
+
+    withContext(Dispatchers.Main) {
+
     }
 }
