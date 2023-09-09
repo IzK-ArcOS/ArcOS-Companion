@@ -4,6 +4,10 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -13,6 +17,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
@@ -36,10 +41,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,26 +71,35 @@ import com.blockyheadman.arcoscompanion.ui.MessagesPage
 import com.blockyheadman.arcoscompanion.ui.ServersPage
 import com.blockyheadman.arcoscompanion.ui.SettingsPage
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
+import kotlinx.coroutines.coroutineScope
 
 lateinit var vibrator: Vibrator
+lateinit var connectivityManager: ConnectivityManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
         super.onCreate(savedInstanceState)
+
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        connectivityManager = getSystemService(ConnectivityManager::class.java) as ConnectivityManager
         installSplashScreen()
         setContent {
             CompanionApp()
         }
     }
+
+    /*override fun onDestroy() {
+        super.onDestroy()
+
+
+    }*/
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompanionApp() {
-    val context = LocalContext.current
 
+    val context = LocalContext.current
     val store = UserPreferences(context)
 
     val systemDarkTheme = isSystemInDarkTheme()
@@ -100,17 +116,60 @@ fun CompanionApp() {
 
     var selectedNavBarItem by rememberSaveable { mutableStateOf(0) }
 
+    var showConnectionLost by rememberSaveable { mutableStateOf(true) }
+    var connectionAvailable by rememberSaveable { mutableStateOf(true) }
+    LaunchedEffect(connectionAvailable) {
+        coroutineScope {
+            connectivityManager.registerDefaultNetworkCallback(object :
+                ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    Log.e("ConnectionManager", "The default network is now: $network")
+                    showConnectionLost = true
+                    connectionAvailable = true
+                }
+
+                override fun onLost(network: Network) {
+                    Log.e(
+                        "ConnectionManager",
+                        "The application no longer has a default network. The last default network was $network"
+                    )
+                    showConnectionLost = true
+                    connectionAvailable = false
+                }
+
+                override fun onCapabilitiesChanged(
+                    network: Network,
+                    networkCapabilities: NetworkCapabilities
+                ) {
+                    Log.e(
+                        "ConnectionManager",
+                        "The default network changed capabilities: $networkCapabilities"
+                    )
+                }
+
+                override fun onLinkPropertiesChanged(
+                    network: Network,
+                    linkProperties: LinkProperties
+                ) {
+                    Log.e(
+                        "ConnectionManager",
+                        "The default network changed link properties: $linkProperties"
+                    )
+                }
+            })
+        }
+    }
 
     ArcOSCompanionTheme (darkTheme, dynamicColor.value) {
-        Surface (
+        Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Scaffold (
+            Scaffold(
                 topBar = {
-                    TopAppBar (
+                    TopAppBar(
                         title = {
-                            Row (
+                            Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 when (selectedNavBarItem) {
@@ -141,13 +200,16 @@ fun CompanionApp() {
                                     selectedNavBarItem = index
                                     vibrator.vibrate(
                                         VibrationEffect.createPredefined(
-                                            VibrationEffect.EFFECT_DOUBLE_CLICK))
-                                          },
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        )
+                                    )
+                                },
                                 icon = {
                                     if (index == 2 && ContextCompat.checkSelfPermission(
                                             context,
                                             Manifest.permission.POST_NOTIFICATIONS
-                                        ) == 0) {
+                                        ) == 0
+                                    ) {
                                         BadgedBox(badge = {
                                             Badge(
                                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -186,26 +248,30 @@ fun CompanionApp() {
                             )
                         }
                     }
+                },
+                snackbarHost = {
+                    AnimatedVisibility(
+                        visible = !connectionAvailable && showConnectionLost,
+                        modifier = Modifier.padding(6.dp)
+                    ) {
+                        Snackbar(
+                            modifier = Modifier.padding(4.dp),
+                            dismissAction = {
+                                Button({showConnectionLost = false}){Text("OK")}
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Network Connection has been lost.")
+                        }
+                    }
                 }
-
             ) { innerPadding ->
 
                 when (selectedNavBarItem) {
-                    0 -> {
-                        HomePage(innerPadding)
-                    }
-
-                    1 -> {
-                        ServersPage(innerPadding)
-                    }
-
-                    2 -> {
-                        MessagesPage(innerPadding)
-                    }
-
-                    else -> {
-                        SettingsPage(innerPadding)
-                    }
+                    0 -> { HomePage(innerPadding) }
+                    1 -> { ServersPage(innerPadding) }
+                    2 -> { MessagesPage(innerPadding) }
+                    else -> { SettingsPage(innerPadding) }
                 }
             }
         }
@@ -214,69 +280,76 @@ fun CompanionApp() {
 
 @Composable
 fun Greeting() {
+    var showGreeting by rememberSaveable { mutableStateOf(true) }
+
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
             // Permission Accepted: Do something
-            Log.d("MainActivity","PERMISSION GRANTED")
+            Log.d("MainActivity", "PERMISSION GRANTED")
         } else {
             // Permission Denied: Do something
-            Log.d("MainActivity","PERMISSION DENIED")
+            Log.d("MainActivity", "PERMISSION DENIED")
         }
     }
     val context = LocalContext.current
 
-    Dialog ({}) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                MaterialTheme.colorScheme.secondaryContainer,
-                MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        ) {
-            Column (
-                horizontalAlignment = Alignment.CenterHorizontally
+    if (showGreeting) {
+        Dialog({}) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(205.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                )
             ) {
-                Text(
-                    text = "Welcome to the ArcOS Companion App!",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "This app has some permissions we need you to grant!",
-                    textAlign = TextAlign.Center
-                )
-                Row (
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Button(onClick = {
-                        when (PackageManager.PERMISSION_GRANTED) {
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            ) -> {
-                                Log.d("MainActivity", "Code requires permission")
-                            }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Welcome to the ArcOS Companion App!",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = "This app has some permissions we need you to grant!",
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(onClick = {
+                            when (PackageManager.PERMISSION_GRANTED) {
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) -> {
+                                    Log.d("MainActivity", "Code requires permission")
+                                }
 
-                            else -> {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                else -> {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    }
                                 }
                             }
-                        }
 
-                    }) {
-                        Text("Accept Permissions")
-                    }
-                    Spacer(Modifier.width(4.dp))
-                    Button(onClick = { /*TODO*/ }) {
-                        Text("No thanks.")
+                        }) {
+                            Text("Sure thing!")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(onClick = { showGreeting = false }) {
+                            Text("No thanks.")
+                        }
                     }
                 }
             }

@@ -50,7 +50,6 @@ android {
 }
 
 dependencies {
-
     //implementation("androidx.core:core-ktx:1.9.0") // OG version in case things go wrong
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
@@ -62,6 +61,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.core:core-splashscreen:1.0.1") // Added for Splash Screen
     implementation("androidx.datastore:datastore-preferences:1.0.0") // Added for Preferences DataStore
+    //implementation("androidx.datastore:datastore:1.0.0") // Added for Proto DataStore
+    //implementation("androidx.datastore:datastore-core:1.0.0") // Added for Proto DataStore
     implementation("androidx.activity:activity-ktx:1.7.2") // Added for permissions
     implementation("androidx.fragment:fragment-ktx:1.6.1") // Added for permissions
     implementation("com.squareup.retrofit2:retrofit:2.9.0") // Added for REST API

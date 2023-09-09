@@ -1,5 +1,9 @@
 package com.blockyheadman.arcoscompanion.ui
 
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.VibrationEffect
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +52,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.blockyheadman.arcoscompanion.connectivityManager
 import com.blockyheadman.arcoscompanion.data.network.AuthCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
@@ -60,6 +65,7 @@ fun ServersPage(externalPadding: PaddingValues) {
     var showApiError by rememberSaveable { mutableStateOf(false) }
     var showUsernameError by rememberSaveable { mutableStateOf(false) }
     var showPasswordError by rememberSaveable { mutableStateOf(false) }
+    var showConnectionError by rememberSaveable { mutableStateOf(false) }
 
     Scaffold (
         modifier = Modifier
@@ -84,6 +90,47 @@ fun ServersPage(externalPadding: PaddingValues) {
             Text("There's not much to see here..")
         }
         if (showNewAPIDialog) {
+            var connectionAvailable by rememberSaveable { mutableStateOf(true) }
+            LaunchedEffect(connectionAvailable) {
+                coroutineScope {
+                    connectivityManager.registerDefaultNetworkCallback(object :
+                        ConnectivityManager.NetworkCallback() {
+                        override fun onAvailable(network: Network) {
+                            Log.e("ConnectionManager", "The default network is now: $network")
+                            connectionAvailable = true
+                        }
+
+                        override fun onLost(network: Network) {
+                            Log.e(
+                                "ConnectionManager",
+                                "The application no longer has a default network. The last default network was $network"
+                            )
+                            connectionAvailable = false
+                        }
+
+                        override fun onCapabilitiesChanged(
+                            network: Network,
+                            networkCapabilities: NetworkCapabilities
+                        ) {
+                            Log.e(
+                                "ConnectionManager",
+                                "The default network changed capabilities: $networkCapabilities"
+                            )
+                        }
+
+                        override fun onLinkPropertiesChanged(
+                            network: Network,
+                            linkProperties: LinkProperties
+                        ) {
+                            Log.e(
+                                "ConnectionManager",
+                                "The default network changed link properties: $linkProperties"
+                            )
+                        }
+                    })
+                }
+            }
+
             Dialog(onDismissRequest = { showNewAPIDialog = false }) {
                 Card(
                     modifier = Modifier
@@ -237,7 +284,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                                     // error
                                     Log.d("AddAPIAuth", authRequest.errorMessage)
                                     if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
-                                        showApiError = true
+                                        if (connectionAvailable) {showApiError = true} else { showConnectionError = true }
                                     } else if (authRequest.errorMessage == "HTTP 404 ") {
                                         showUsernameError = true
                                     } else if (authRequest.errorMessage == "HTTP 403 ") {
@@ -300,7 +347,21 @@ fun ServersPage(externalPadding: PaddingValues) {
                             }
                         )
                     }
-
+                    if (showConnectionError) {
+                        AlertDialog(
+                            onDismissRequest = { showConnectionError = false },
+                            confirmButton = {
+                                Button(onClick = {
+                                    showConnectionError = false
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            text = {
+                                Text("To continue, you must be online")
+                            }
+                        )
+                    }
                 }
 
             }
