@@ -10,14 +10,12 @@ interface APIService {
     suspend fun getAuth(@Header("authorization") auth: String): AuthResponse
 
     companion object {
-        var apiService: APIService? = null
+        private var apiService: APIService? = null
         fun getInstance(apiName: String): APIService {
-            if (apiService == null) {
-                apiService = Retrofit.Builder()
-                    .baseUrl("https://${apiName}.arcapi.nl")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build().create(APIService::class.java)
-            }
+            apiService = Retrofit.Builder()
+                .baseUrl("https://${apiName}.arcapi.nl")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build().create(APIService::class.java)
             return apiService!!
         }
     }

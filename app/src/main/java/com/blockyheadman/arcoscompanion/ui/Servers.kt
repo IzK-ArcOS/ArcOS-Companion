@@ -6,19 +6,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -45,24 +48,18 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.blockyheadman.arcoscompanion.data.network.AuthCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
-import com.blockyheadman.arcoscompanion.data.network.AuthViewModel
 import com.blockyheadman.arcoscompanion.vibrator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServersPage(externalPadding: PaddingValues) {
-    //val authViewModel = AuthViewModel()
-
-    /*LaunchedEffect(Unit, block = {
-        authViewModel.getToken("community")
-    })*/
-
     var showNewAPIDialog by rememberSaveable { mutableStateOf(false) }
+    var showApiError by rememberSaveable { mutableStateOf(false) }
+    var showUsernameError by rememberSaveable { mutableStateOf(false) }
+    var showPasswordError by rememberSaveable { mutableStateOf(false) }
 
     Scaffold (
         modifier = Modifier
@@ -84,19 +81,6 @@ fun ServersPage(externalPadding: PaddingValues) {
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            /*if (authViewModel.errorMessage.isEmpty()) {
-                val authData: AuthResponse? = authViewModel.auth
-
-                if (authData?.data?.token == null) {
-                    Text("null")
-                } else {
-                    Text(authData.data.token)
-                }
-
-                //Text("Auth Success!")
-            } else {
-                Text(authViewModel.errorMessage)
-            }*/
             Text("There's not much to see here..")
         }
         if (showNewAPIDialog) {
@@ -117,6 +101,10 @@ fun ServersPage(externalPadding: PaddingValues) {
                     var apiInput by rememberSaveable { mutableStateOf("") }
                     var usernameInput by rememberSaveable { mutableStateOf("") }
                     var passwordInput by rememberSaveable { mutableStateOf("") }
+
+                    var apiError by rememberSaveable { mutableStateOf(false) }
+                    var usernameError by rememberSaveable { mutableStateOf(false) }
+                    var passwordError by rememberSaveable { mutableStateOf(false) }
 
                     Column (
                         Modifier.fillMaxSize(),
@@ -139,7 +127,10 @@ fun ServersPage(externalPadding: PaddingValues) {
                         OutlinedTextField(
                             label = { Text("API Name:") },
                             value = apiInput,
-                            onValueChange = { apiInput = it },
+                            onValueChange = {
+                                apiInput = it
+                                apiError = false
+                            },
                             keyboardOptions = KeyboardOptions(
                                 KeyboardCapitalization.None,
                                 false,
@@ -150,14 +141,17 @@ fun ServersPage(externalPadding: PaddingValues) {
                                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
                             ),
                             placeholder = { Text("ex: community") },
-                            isError = apiInput.isEmpty(),
+                            isError = apiError,
                             singleLine = true
                         )
 
                         OutlinedTextField(
                             label = { Text("Username:") },
                             value = usernameInput,
-                            onValueChange = { usernameInput = it },
+                            onValueChange = {
+                                usernameInput = it
+                                usernameError = false
+                            },
                             keyboardOptions = KeyboardOptions(
                                 KeyboardCapitalization.Words,
                                 false,
@@ -167,14 +161,17 @@ fun ServersPage(externalPadding: PaddingValues) {
                             keyboardActions = KeyboardActions(
                                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
                             ),
-                            isError = usernameInput.isEmpty(),
+                            isError = usernameError,
                             singleLine = true
                         )
 
                         OutlinedTextField(
                             label = { Text("Password:") },
                             value = passwordInput,
-                            onValueChange = { passwordInput = it },
+                            onValueChange = {
+                                passwordInput = it
+                                passwordError = false
+                            },
                             keyboardOptions = KeyboardOptions(
                                 KeyboardCapitalization.None,
                                 false,
@@ -184,88 +181,129 @@ fun ServersPage(externalPadding: PaddingValues) {
                             keyboardActions = KeyboardActions(
                                 onDone = { focusManager.clearFocus() }
                             ),
-                            isError = passwordInput.isEmpty(),
+                            isError = passwordError,
                             visualTransformation = PasswordVisualTransformation(),
                             singleLine = true
                         )
 
                         var buttonClicked by rememberSaveable { mutableStateOf(false) }
 
-                        Button(onClick = {
-                            buttonClicked = true
-                            Log.d("AddAPIOKButton", "OK Clicked")
-
-                            //showNewAPIDialog = false
-                            vibrator.vibrate(
-                                VibrationEffect.createPredefined(
-                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                        Row (verticalAlignment = Alignment.CenterVertically) {
+                            Button(onClick = {
+                                showNewAPIDialog = false
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
                                 )
-                            )
-                        },
-                        enabled = !apiInput.isEmpty() && !usernameInput.isEmpty() && !passwordInput.isEmpty()
-                        ) {
-                            Text("OK")
+                            }
+                            ) {
+                                Text("Cancel")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    buttonClicked = true
+                                    Log.d("AddAPIOKButton", "OK Clicked")
+
+                                    //showNewAPIDialog = false
+                                    vibrator.vibrate(
+                                        VibrationEffect.createPredefined(
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        )
+                                    )
+                                },
+                                enabled = apiInput.isNotEmpty() && usernameInput.isNotEmpty() && passwordInput.isNotEmpty()
+                            ) {
+                                Text("OK")
+                            }
                         }
 
                         if (buttonClicked) {
+                            val authRequest = AuthCall()
+                            var authData: AuthResponse?
 
-                            val authRequest = AuthViewModel()
-
-                            /*LaunchedEffect(Unit, block = {
-                                authRequest.getToken(apiInput)
-                            })*/
-                            
                             LaunchedEffect(authRequest) {
                                 coroutineScope {
-                                    val authResponse = async { authRequest.getToken(apiInput, usernameInput, passwordInput) }
+                                    authData = authRequest.getToken(apiInput, usernameInput, passwordInput)
+                                }
+                                if (authRequest.errorMessage.isEmpty()) {
+                                    if (authData?.data?.token.isNullOrBlank()) {
+                                        // token success
+                                        showNewAPIDialog = false
+                                    }
 
-                                    withContext(Dispatchers.Main) {
-
+                                } else {
+                                    // error
+                                    Log.d("AddAPIAuth", authRequest.errorMessage)
+                                    if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
+                                        showApiError = true
+                                    } else if (authRequest.errorMessage == "HTTP 404 ") {
+                                        showUsernameError = true
+                                    } else if (authRequest.errorMessage == "HTTP 403 ") {
+                                        showPasswordError = true
                                     }
                                 }
-                            }
-
-                            while (authRequest.auth?.data?.token?.isEmpty() == true) {
-                                Dialog(onDismissRequest = {  }) {
-                                    CircularProgressIndicator()
-                                }
-
-                            }
-
-                            if (authRequest.errorMessage.isEmpty()) {
-                                val authData: AuthResponse? = authRequest.auth
-
-                                /*if (authData?.data?.token == null) {
-                                    // null
-                                    Log.d("AddAPIAuth", "Token null")
-                                } else */
-
-                                if (authData?.data?.token != null) {
-                                    // token success
-                                    Log.d(
-                                        "AddAPIAuth",
-                                        "Token: ${authRequest.auth!!.data.token}"
-                                    )
-                                    showNewAPIDialog = false
-                                }
-
-                            } else {
-                                Log.d("AddAPIAuth", authRequest.errorMessage)
-                                // error
+                                buttonClicked = false
                             }
                         }
-
                     }
+
+                    if (showApiError) {
+                        AlertDialog(
+                            onDismissRequest = { showApiError = false },
+                            confirmButton = {
+                                Button(onClick = {
+                                    showApiError = false
+                                    apiError = true
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            title = {
+                                Text("Incorrect API name")
+                            },
+                            text = {
+                                Text("Try using and API name like 'community' for the value.")
+                            }
+                        )
+                    }
+                    if (showUsernameError) {
+                        AlertDialog(
+                            onDismissRequest = { showUsernameError = false },
+                            confirmButton = {
+                                Button(onClick = {
+                                    showUsernameError = false
+                                    usernameError = true
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            text = {
+                                Text("Incorrect username")
+                            }
+                        )
+                    }
+                    if (showPasswordError) {
+                        AlertDialog(
+                            onDismissRequest = { showPasswordError = false },
+                            confirmButton = {
+                                Button(onClick = {
+                                    showPasswordError = false
+                                    passwordError = true
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            text = {
+                                Text("Incorrect password")
+                            }
+                        )
+                    }
+
                 }
+
             }
         }
-    }
-}
-
-suspend fun test(authRequest: AuthViewModel, apiInput: String, usernameInput: String, passwordInput: String) = coroutineScope {
-    val authResponse = async { authRequest.getToken(apiInput, usernameInput, passwordInput) }
-
-    withContext(Dispatchers.Main) {
-
     }
 }
