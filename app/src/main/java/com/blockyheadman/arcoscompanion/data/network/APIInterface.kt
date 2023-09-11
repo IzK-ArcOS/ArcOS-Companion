@@ -13,7 +13,7 @@ interface APIService {
         private var apiService: APIService? = null
         fun getInstance(apiName: String): APIService {
             apiService = Retrofit.Builder()
-                .baseUrl("https://${apiName}.arcapi.nl")
+                .baseUrl("https://${apiName}")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build().create(APIService::class.java)
             return apiService!!

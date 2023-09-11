@@ -187,7 +187,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                             keyboardActions = KeyboardActions(
                                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
                             ),
-                            placeholder = { Text("ex: community") },
+                            placeholder = { Text("ex: community.arcapi.nl") },
                             isError = apiError,
                             singleLine = true
                         )
@@ -311,7 +311,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                                 Text("Incorrect API name")
                             },
                             text = {
-                                Text("Try using and API name like 'community' for the value.")
+                                Text("Try using and API name like 'community.arcapi.nl' for the value.")
                             }
                         )
                     }
