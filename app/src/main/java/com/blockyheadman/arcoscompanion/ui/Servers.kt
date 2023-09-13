@@ -1,11 +1,13 @@
 package com.blockyheadman.arcoscompanion.ui
 
+import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.VibrationEffect
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -53,10 +56,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.connectivityManager
+import com.blockyheadman.arcoscompanion.data.apiDataStore
 import com.blockyheadman.arcoscompanion.data.network.AuthCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,13 +87,28 @@ fun ServersPage(externalPadding: PaddingValues) {
         }
     ) { innerPadding ->
 
+        val mainContext = LocalContext.current
+
+        //lateinit var data: Flow<String>
+
         Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("There's not much to see here..")
+            //Text("There's not much to see here..")
+            LaunchedEffect(null) {
+                coroutineScope {
+                    launch {
+                        mainContext.apiDataStore.data.collect { data ->
+
+                        }
+                    }
+                }
+                // Add API to server screen
+
+            }
         }
         if (showNewAPIDialog) {
             var connectionAvailable by rememberSaveable { mutableStateOf(true) }
@@ -160,6 +181,8 @@ fun ServersPage(externalPadding: PaddingValues) {
                     ) {
                         //Text("This feature is not yet available.")
                         //Spacer(Modifier.size(8.dp))
+
+                        val addApiContext = LocalContext.current
 
                         Text(
                             "Add API",
@@ -250,8 +273,9 @@ fun ServersPage(externalPadding: PaddingValues) {
                             Spacer(Modifier.width(8.dp))
                             Button(
                                 onClick = {
-                                    buttonClicked = true
                                     Log.d("AddAPIOKButton", "OK Clicked")
+                                    focusManager.clearFocus()
+                                    buttonClicked = true
 
                                     //showNewAPIDialog = false
                                     vibrator.vibrate(
@@ -278,6 +302,23 @@ fun ServersPage(externalPadding: PaddingValues) {
                                     if (authData?.data?.token.isNullOrBlank()) {
                                         // token success
                                         showNewAPIDialog = false
+
+                                        runBlocking {
+                                            addAPI(
+                                                addApiContext,
+                                                apiInput,
+                                                null,
+                                                usernameInput,
+                                                passwordInput
+                                            )
+                                        }
+
+                                        Toast.makeText(
+                                            addApiContext,
+                                            "API Added Successfully!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        Log.d("AuthRequest", "API Authenticated Successfully!")
                                     }
 
                                 } else {
@@ -365,6 +406,33 @@ fun ServersPage(externalPadding: PaddingValues) {
                 }
 
             }
+        }
+    }
+}
+
+suspend fun addAPI(
+    context: Context,
+    name: String,
+    authCode: String?,
+    username: String,
+    password: String
+) {
+    if (authCode != null) {
+        context.apiDataStore.updateData { currentData ->
+            currentData.toBuilder()
+                .setName(name)
+                .setAuthCode(authCode)
+                .setUsername(username)
+                .setPassword(password)
+                .build()
+        }
+    } else {
+        context.apiDataStore.updateData { currentData ->
+            currentData.toBuilder()
+                .setName(name)
+                .setUsername(username)
+                .setPassword(password)
+                .build()
         }
     }
 }

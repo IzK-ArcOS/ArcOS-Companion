@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option java_package = "com.blockyheadman.arcoscompanion.data";
+option java_multiple_files = true;
+
+message ApiSave {
+  string name = 1;
+  optional string auth_code = 2;
+  string username = 3;
+  string password = 4;
+}

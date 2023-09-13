@@ -1,7 +1,10 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.protobuf") version "0.9.4"
 }
+
+val protobufVersion = "3.24.0"
 
 android {
     namespace = "com.blockyheadman.arcoscompanion"
@@ -30,11 +33,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -45,6 +48,25 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    sourceSets {
+        protobuf {
+            protoc {
+                artifact = "com.google.protobuf:protoc:$protobufVersion"
+            }
+            generateProtoTasks {
+                all().forEach { task ->
+                    task.builtins {
+                        register("java") {
+                            option("lite")
+                        }
+                        register("kotlin") {
+                            option("lite")
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -62,7 +84,9 @@ dependencies {
 
     implementation("androidx.core:core-splashscreen:1.0.1") // Added for Splash Screen
     implementation("androidx.datastore:datastore-preferences:1.0.0") // Added for Preferences DataStore
-    //implementation("androidx.datastore:datastore:1.0.0") // Added for Proto DataStore
+    implementation("androidx.datastore:datastore:1.0.0") // Added for Proto DataStore
+    implementation("com.google.protobuf:protobuf-kotlin-lite:$protobufVersion")
+    implementation("com.google.protobuf:protoc:$protobufVersion")
     //implementation("androidx.datastore:datastore-core:1.0.0") // Added for Proto DataStore
     implementation("androidx.activity:activity-ktx:1.7.2") // Added for permissions
     implementation("androidx.fragment:fragment-ktx:1.6.1") // Added for permissions
