@@ -38,8 +38,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,12 +58,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.connectivityManager
+import com.blockyheadman.arcoscompanion.data.ApiSave
 import com.blockyheadman.arcoscompanion.data.apiDataStore
 import com.blockyheadman.arcoscompanion.data.network.AuthCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,7 +91,8 @@ fun ServersPage(externalPadding: PaddingValues) {
 
         val mainContext = LocalContext.current
 
-        //lateinit var data: Flow<String>
+        //val apiSaveCall = ApiSaveIO()
+        //var apiSaveList: List<ApiSave>?
 
         Box(
             modifier = Modifier
@@ -97,18 +100,38 @@ fun ServersPage(externalPadding: PaddingValues) {
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            //Text("There's not much to see here..")
-            LaunchedEffect(null) {
-                coroutineScope {
-                    launch {
-                        mainContext.apiDataStore.data.collect { data ->
+            Text("There's not much to see here..")
 
-                        }
-                    }
+            val apiSaves = mainContext.apiDataStore.data.collectAsState(
+                ApiSave.getDefaultInstance()
+            ).value
+            val scope = rememberCoroutineScope()
+
+
+
+            /*LaunchedEffect(apiSaveCall) {
+                Log.d("APISAVECALL", "Running APISAVE")
+                coroutineScope {
+                    Log.d("APISAVECALL", "Starting coroutine")
+                    apiSaveList = apiSaveCall.getApiSaveList(mainContext)
                 }
+
+                Log.d("APISAVECALL", "Testing data")
+                if (apiSaveCall.errorMessage.isEmpty()) {
+                    Log.d("APISAVECALL", "No error detected")
+                    if (!apiSaveList.isNullOrEmpty()) {
+                        Log.d("GetApiSaves", apiSaveList.toString())
+                    } else {
+                        Log.e("GetApiSaves", "Api saves failed to load.")
+                    }
+                } else {
+                    Log.d("GetApiSaves", "An error occurred: ${apiSaveCall.errorMessage}")
+                }
+
+
                 // Add API to server screen
 
-            }
+            }*/
         }
         if (showNewAPIDialog) {
             var connectionAvailable by rememberSaveable { mutableStateOf(true) }

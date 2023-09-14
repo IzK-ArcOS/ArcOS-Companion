@@ -123,13 +123,13 @@ fun CompanionApp() {
             connectivityManager.registerDefaultNetworkCallback(object :
                 ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    Log.e("ConnectionManager", "The default network is now: $network")
+                    Log.d("ConnectionManager", "The default network is now: $network")
                     showConnectionLost = true
                     connectionAvailable = true
                 }
 
                 override fun onLost(network: Network) {
-                    Log.e(
+                    Log.d(
                         "ConnectionManager",
                         "The application no longer has a default network. The last default network was $network"
                     )
@@ -141,7 +141,7 @@ fun CompanionApp() {
                     network: Network,
                     networkCapabilities: NetworkCapabilities
                 ) {
-                    Log.e(
+                    Log.d(
                         "ConnectionManager",
                         "The default network changed capabilities: $networkCapabilities"
                     )
@@ -151,7 +151,7 @@ fun CompanionApp() {
                     network: Network,
                     linkProperties: LinkProperties
                 ) {
-                    Log.e(
+                    Log.d(
                         "ConnectionManager",
                         "The default network changed link properties: $linkProperties"
                     )

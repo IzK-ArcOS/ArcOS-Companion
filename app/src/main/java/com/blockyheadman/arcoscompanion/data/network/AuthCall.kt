@@ -56,8 +56,7 @@ class AuthCall {
                     auth = Gson().fromJson(json, AuthResponse::class.java)
                     Log.d("AuthOutput", auth.toString())
                     return@async auth
-                }
-                    .await()
+                }.await()
             }
         } catch (e: Exception) {
             errorMessage = e.message.toString()
