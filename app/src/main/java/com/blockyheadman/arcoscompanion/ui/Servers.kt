@@ -38,10 +38,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,8 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.connectivityManager
-import com.blockyheadman.arcoscompanion.data.ApiSave
-import com.blockyheadman.arcoscompanion.data.apiDataStore
 import com.blockyheadman.arcoscompanion.data.network.AuthCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
@@ -71,6 +67,7 @@ import kotlinx.coroutines.runBlocking
 fun ServersPage(externalPadding: PaddingValues) {
     var showNewAPIDialog by rememberSaveable { mutableStateOf(false) }
     var showApiError by rememberSaveable { mutableStateOf(false) }
+    var showAuthCodeError by rememberSaveable { mutableStateOf(false) }
     var showUsernameError by rememberSaveable { mutableStateOf(false) }
     var showPasswordError by rememberSaveable { mutableStateOf(false) }
     var showConnectionError by rememberSaveable { mutableStateOf(false) }
@@ -102,36 +99,7 @@ fun ServersPage(externalPadding: PaddingValues) {
         ) {
             Text("There's not much to see here..")
 
-            val apiSaves = mainContext.apiDataStore.data.collectAsState(
-                ApiSave.getDefaultInstance()
-            ).value
-            val scope = rememberCoroutineScope()
 
-
-
-            /*LaunchedEffect(apiSaveCall) {
-                Log.d("APISAVECALL", "Running APISAVE")
-                coroutineScope {
-                    Log.d("APISAVECALL", "Starting coroutine")
-                    apiSaveList = apiSaveCall.getApiSaveList(mainContext)
-                }
-
-                Log.d("APISAVECALL", "Testing data")
-                if (apiSaveCall.errorMessage.isEmpty()) {
-                    Log.d("APISAVECALL", "No error detected")
-                    if (!apiSaveList.isNullOrEmpty()) {
-                        Log.d("GetApiSaves", apiSaveList.toString())
-                    } else {
-                        Log.e("GetApiSaves", "Api saves failed to load.")
-                    }
-                } else {
-                    Log.d("GetApiSaves", "An error occurred: ${apiSaveCall.errorMessage}")
-                }
-
-
-                // Add API to server screen
-
-            }*/
         }
         if (showNewAPIDialog) {
             var connectionAvailable by rememberSaveable { mutableStateOf(true) }
@@ -190,10 +158,12 @@ fun ServersPage(externalPadding: PaddingValues) {
                     val focusManager = LocalFocusManager.current
 
                     var apiInput by rememberSaveable { mutableStateOf("") }
+                    var authCodeInput by rememberSaveable { mutableStateOf("") }
                     var usernameInput by rememberSaveable { mutableStateOf("") }
                     var passwordInput by rememberSaveable { mutableStateOf("") }
 
                     var apiError by rememberSaveable { mutableStateOf(false) }
+                    var authCodeError by rememberSaveable { mutableStateOf(false) }
                     var usernameError by rememberSaveable { mutableStateOf(false) }
                     var passwordError by rememberSaveable { mutableStateOf(false) }
 
@@ -235,6 +205,26 @@ fun ServersPage(externalPadding: PaddingValues) {
                             ),
                             placeholder = { Text("ex: community.arcapi.nl") },
                             isError = apiError,
+                            singleLine = true
+                        )
+
+                        OutlinedTextField(
+                            label = { Text("Auth Code (Optional):") },
+                            value = authCodeInput,
+                            onValueChange = {
+                                authCodeInput = it
+                                authCodeError = false
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                KeyboardCapitalization.None,
+                                false,
+                                KeyboardType.Password,
+                                ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            ),
+                            isError = authCodeError,
                             singleLine = true
                         )
 
@@ -319,14 +309,14 @@ fun ServersPage(externalPadding: PaddingValues) {
 
                             LaunchedEffect(authRequest) {
                                 coroutineScope {
-                                    authData = authRequest.getToken(apiInput, usernameInput, passwordInput)
+                                    authData = authRequest.getToken(apiInput, authCodeInput, usernameInput, passwordInput)
                                 }
                                 if (authRequest.errorMessage.isEmpty()) {
                                     if (authData?.data?.token.isNullOrBlank()) {
                                         // token success
                                         showNewAPIDialog = false
 
-                                        runBlocking {
+                                        /*runBlocking {
                                             addAPI(
                                                 addApiContext,
                                                 apiInput,
@@ -334,7 +324,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                                                 usernameInput,
                                                 passwordInput
                                             )
-                                        }
+                                        }*/
 
                                         Toast.makeText(
                                             addApiContext,
@@ -376,6 +366,22 @@ fun ServersPage(externalPadding: PaddingValues) {
                             },
                             text = {
                                 Text("Try using and API name like 'community.arcapi.nl' for the value.")
+                            }
+                        )
+                    }
+                    if (showAuthCodeError) {
+                        AlertDialog(
+                            onDismissRequest = { showAuthCodeError = false },
+                            confirmButton = {
+                                Button(onClick = {
+                                    showAuthCodeError = false
+                                    authCodeError = true
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            text = {
+                                Text("Incorrect auth code")
                             }
                         )
                     }
@@ -433,7 +439,7 @@ fun ServersPage(externalPadding: PaddingValues) {
     }
 }
 
-suspend fun addAPI(
+/*suspend fun addAPI(
     context: Context,
     name: String,
     authCode: String?,
@@ -458,4 +464,4 @@ suspend fun addAPI(
                 .build()
         }
     }
-}
+}*/

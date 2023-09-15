@@ -11,11 +11,18 @@ interface APIService {
 
     companion object {
         private var apiService: APIService? = null
-        fun getInstance(apiName: String): APIService {
-            apiService = Retrofit.Builder()
-                .baseUrl("https://${apiName}")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build().create(APIService::class.java)
+        fun getInstance(apiName: String, authCode: String?): APIService {
+            if (authCode.isNullOrBlank()) {
+                apiService = Retrofit.Builder()
+                    .baseUrl("https://$apiName")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build().create(APIService::class.java)
+            } else {
+                apiService = Retrofit.Builder()
+                    .baseUrl("https://$apiName?ac=$authCode")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build().create(APIService::class.java)
+            }
             return apiService!!
         }
     }

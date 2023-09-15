@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.protobuf") version "0.9.4"
+    //id("com.google.protobuf") version "0.9.4" // Added for Proto DataStore
 }
 
 val protobufVersion = "3.24.0"
@@ -51,7 +51,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    sourceSets {
+    /*sourceSets {
         protobuf {
             protoc {
                 artifact = "com.google.protobuf:protoc:$protobufVersion"
@@ -69,7 +69,7 @@ android {
                 }
             }
         }
-    }
+    }*/
 }
 
 dependencies {
@@ -86,9 +86,9 @@ dependencies {
 
     implementation("androidx.core:core-splashscreen:1.0.1") // Added for Splash Screen
     implementation("androidx.datastore:datastore-preferences:1.0.0") // Added for Preferences DataStore
-    implementation("androidx.datastore:datastore:1.0.0") // Added for Proto DataStore
-    implementation("com.google.protobuf:protobuf-kotlin-lite:$protobufVersion") // Added for Proto DataStore
-    implementation("com.google.protobuf:protoc:$protobufVersion") // Added for Proto DataStore
+    //implementation("androidx.datastore:datastore:1.0.0") // Added for Proto DataStore
+    //implementation("com.google.protobuf:protobuf-kotlin-lite:$protobufVersion") // Added for Proto DataStore
+    //implementation("com.google.protobuf:protoc:$protobufVersion") // Added for Proto DataStore
     implementation("androidx.activity:activity-ktx:1.7.2") // Added for permissions
     implementation("androidx.fragment:fragment-ktx:1.6.1") // Added for permissions
     implementation("com.squareup.retrofit2:retrofit:2.9.0") // Added for REST API

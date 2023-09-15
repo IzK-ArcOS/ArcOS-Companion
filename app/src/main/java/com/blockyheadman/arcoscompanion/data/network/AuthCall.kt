@@ -36,10 +36,10 @@ data class AuthResponse(
 class AuthCall {
     var errorMessage: String by mutableStateOf("")
 
-    suspend fun getToken(apiName: String, username: String, password: String): AuthResponse? {
+    suspend fun getToken(apiName: String, authCode: String?, username: String, password: String): AuthResponse? {
         var auth: AuthResponse
 
-        val apiService = APIService.getInstance(apiName)
+        val apiService = APIService.getInstance(apiName, authCode)
         try {
             coroutineScope {
                 async {
