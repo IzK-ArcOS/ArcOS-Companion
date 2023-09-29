@@ -46,13 +46,14 @@ android {
     }
     composeOptions {
         //kotlinCompilerExtensionVersion = "1.4.3"
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = "1.5.3" // Updated Kotlin Compiler
     }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    // Protobuf setup for Proto Datastore
     /*sourceSets {
         protobuf {
             protoc {
@@ -84,7 +85,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3:1.2.0-alpha08") // Remove version if unstable
 
     implementation("androidx.core:core-splashscreen:1.0.1") // Added for Splash Screen
     implementation("androidx.datastore:datastore-preferences:1.0.0") // Added for Preferences DataStore

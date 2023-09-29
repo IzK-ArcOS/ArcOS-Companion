@@ -36,19 +36,21 @@ data class AuthResponse(
 class AuthCall {
     var errorMessage: String by mutableStateOf("")
 
-    suspend fun getToken(apiName: String, authCode: String?, username: String, password: String): AuthResponse? {
+    suspend fun getToken(apiName: String, username: String, password: String, authCode: String?): AuthResponse? {
         var auth: AuthResponse
 
-        val apiService = APIService.getInstance(apiName, authCode)
+        //val apiService = APIService.getInstance(apiName, authCode)
         try {
             coroutineScope {
                 async {
+                    val apiService = APIService.getInstance(apiName, authCode)
                     val json = Gson().toJson(
                         apiService.getAuth(
                             "Basic " + Base64.encodeToString(
                                 "$username:$password".toByteArray(),
                                 Base64.NO_WRAP
-                            )
+                            ),
+                            authCode
                         )
                     )
 
@@ -61,6 +63,7 @@ class AuthCall {
         } catch (e: Exception) {
             errorMessage = e.message.toString()
         }
+
         return null
     }
 }

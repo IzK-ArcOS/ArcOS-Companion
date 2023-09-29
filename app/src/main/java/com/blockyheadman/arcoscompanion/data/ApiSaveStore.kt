@@ -34,6 +34,9 @@ interface ApiSaveDao {
 
     @Delete
     suspend fun delete(api: ApiSaveData)
+
+    @Query("DELETE FROM apis")
+    suspend fun deleteAll()
 }
 
 @Database(entities = [ApiSaveData::class], version = 1, exportSchema = false)
