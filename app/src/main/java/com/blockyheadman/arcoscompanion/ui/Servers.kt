@@ -63,6 +63,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,16 +85,18 @@ var connectionAvailable: Boolean = false
 
 lateinit var privateAPIDialog: MutableState<Boolean>
 lateinit var showAddAPI: MutableState<Boolean>
+lateinit var showEditAPI: MutableState<Boolean>
+lateinit var editApi: ApiSaveData
 
 lateinit var apiDao: ApiSaveDao
-
+var apis by mutableStateOf(emptyList<ApiSaveData>())
 
 @Composable
 fun ServersPage(externalPadding: PaddingValues) {
 
     privateAPIDialog = rememberSaveable { mutableStateOf(false) }
-
     showAddAPI = rememberSaveable { mutableStateOf(false) }
+    showEditAPI = rememberSaveable { mutableStateOf(false) }
 
     var serverTypeTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
@@ -111,14 +114,20 @@ fun ServersPage(externalPadding: PaddingValues) {
                 tabs = {
                     Tab(
                         selected = serverTypeTabIndex==0,
-                        onClick = { serverTypeTabIndex = 0 },
+                        onClick = {
+                            serverTypeTabIndex = 0
+                            privateAPIDialog.value = false
+                                  },
                         modifier = Modifier.height(32.dp)
                     ) {
                         Text("Public APIs")
                     }
                     Tab(
                         selected = serverTypeTabIndex==1,
-                        onClick = { serverTypeTabIndex = 1 },
+                        onClick = {
+                            serverTypeTabIndex = 1
+                            privateAPIDialog.value = true
+                                  },
                         modifier = Modifier.height(32.dp)
                     ) {
                         Text("Private APIs")
@@ -131,7 +140,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
                 //showNewAPIDialog.value = true
                 showAddAPI.value = true
-                privateAPIDialog.value = serverTypeTabIndex == 1
+                //privateAPIDialog.value = serverTypeTabIndex == 1
             }) {
                 Text(
                     when (serverTypeTabIndex) {
@@ -149,10 +158,7 @@ fun ServersPage(externalPadding: PaddingValues) {
         val db = ApiSaveDatabase.getInstance(mainContext)
 
         apiDao = db.apiSaveDao()
-        var apis: List<ApiSaveData> by rememberSaveable { mutableStateOf(emptyList()) }
-
-        //val apiSaveCall = ApiSaveIO()
-        //var apiSaveList: List<ApiSave>?
+        //apis by rememberSaveable { mutableStateOf(emptyList<ApiSaveData>()) } //: List<ApiSaveData>
 
         Box(
             modifier = Modifier
@@ -172,25 +178,34 @@ fun ServersPage(externalPadding: PaddingValues) {
                 when (serverTypeTabIndex) {
                     0 -> {
                         items(apis.size) {
-                            if (apis[it].authCode.isNullOrBlank()) ApiCard(apis[it]) // private = false
+                            if (apis[it].authCode.isBlank()) ApiCard(apis[it]) // private = false
                         }
                         if (apis.isEmpty()) item {
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center) {
                                 Text("There's not much to see here..")
                             }
                         }
                     }
                     1 -> {
                         items(apis.size) {
-                            if (!apis[it].authCode.isNullOrBlank()) ApiCard(apis[it]) // private = true
+                            if (apis[it].authCode.isNotBlank()) ApiCard(apis[it]) // private = true
                         }
                         if (apis.isEmpty()) item {
-                            Box(contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center) {
                                 Text("There's not much to see here..")
                             }
                         }
                     }
-                    else -> item { Text("This page shouldn't exist.\nPlease report this issue.") }
+                    else -> item {
+                        Text (
+                            text = "This page shouldn't exist.\nPlease report this issue.",
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
 
             }
@@ -239,6 +254,9 @@ fun ServersPage(externalPadding: PaddingValues) {
 
             NewApiDialog(apiDao)
         }
+        if (showEditAPI.value) {
+            EditApiDialog(apiDao, editApi)
+        }
     }
 }
 
@@ -246,10 +264,6 @@ fun ServersPage(externalPadding: PaddingValues) {
 @Composable
 fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for private apis
     var settingsExpanded by rememberSaveable { mutableStateOf(false) }
-
-    /*val data: ApiSaveData = ApiSaveData(
-        "superlong.arcosapiname.withextention", "username", "password", "authcode"
-    )*/
 
     Card(
         modifier = Modifier
@@ -295,23 +309,17 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                         onDismissRequest = { settingsExpanded = false }
                     ) {
 
-                        val dropdownContext = LocalContext.current
-
                         DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                            Toast.makeText(
-                                dropdownContext,
-                                "This feature isn't available yet.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            /*runBlocking {
+                            runBlocking {
                                 coroutineScope {
                                     launch(Dispatchers.IO) {
                                         // Edit info
                                         settingsExpanded = false
+                                        editApi = data
+                                        showEditAPI.value = true
                                     }
                                 }
-                            }*/
-                            settingsExpanded = false
+                            }
                         },
                             leadingIcon = {
                                 Icon(
@@ -326,6 +334,7 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                                     launch(Dispatchers.IO) {
                                         apiDao.delete(data)
                                         settingsExpanded = false
+                                        apis = apiDao.getAll()
                                     }
                                 }
                             }
@@ -392,9 +401,6 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                 Arrangement.Center,
                 Alignment.CenterHorizontally
             ) {
-                //Text("This feature is not yet available.")
-                //Spacer(Modifier.size(8.dp))
-
                 val addApiContext = LocalContext.current
 
                 Text(
@@ -537,16 +543,26 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                         }
                         if (authRequest.errorMessage.isEmpty()) {
                             if (authData?.data?.token.isNullOrBlank()) {
+                                coroutineScope {
+                                    apiDao.insert(
+                                        ApiSaveData(
+                                            apiInput,
+                                            usernameInput,
+                                            passwordInput,
+                                            authCodeInput
+                                        )
+                                    )
+                                }
                                 // token success
-                                showAddAPI.value = false
-
                                 Toast.makeText(
                                     addApiContext,
                                     "API Added Successfully!",
                                     Toast.LENGTH_SHORT
                                 ).show()
+
                                 Log.d("AuthRequest", "API Authenticated Successfully!")
-                                apiDao.insert(ApiSaveData(apiInput, usernameInput, passwordInput, authCodeInput))
+                                apis = apiDao.getAll()
+                                showAddAPI.value = false
                             }
 
                         } else {
@@ -577,6 +593,244 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 usernameError = true
+                            } else if (authRequest.errorMessage == "HTTP 403 ") {
+                                Toast.makeText(
+                                    mainContext,
+                                    "Incorrect password.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                passwordError = true
+                            } else if (authRequest.errorMessage == "HTTP 401 ") {
+                                Toast.makeText(
+                                    mainContext,
+                                    "Incorrect Auth Code.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                authCodeError = true
+                            }
+                        }
+                        buttonClicked = false
+                    }
+                }
+            }
+        }
+
+    }
+
+// If in case I wish to have a Modal
+    /*val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    if (showAddApiSheet.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showAddApiSheet.value = false },
+            sheetState = sheetState
+        ) {
+            // Move everything inside the Card here.
+        }
+    }*/
+}
+
+@Composable
+fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
+    val apiName = api.name
+    val username = api.username
+
+    Dialog(onDismissRequest = { showEditAPI.value = false }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                //.height(if (privateAPIDialog.value) 300.dp else 210.dp)
+                .height(if (privateAPIDialog.value) 410.dp else 340.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+            val focusManager = LocalFocusManager.current
+
+            var authCodeInput by rememberSaveable { mutableStateOf("") }
+            var passwordInput by rememberSaveable { mutableStateOf("") }
+
+            var authCodeError by rememberSaveable { mutableStateOf(false) }
+            var passwordError by rememberSaveable { mutableStateOf(false) }
+
+            val mainContext = LocalContext.current
+
+            Column (
+                Modifier
+                    .fillMaxSize()
+                    .padding(4.dp),
+                Arrangement.Center,
+                Alignment.CenterHorizontally
+            ) {
+                val editApiContext = LocalContext.current
+
+                Text(
+                    "Edit API",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(8.dp, 8.dp),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                OutlinedTextField(
+                    label = { Text("API Name:") },
+                    value = editApi.name,
+                    onValueChange = {},
+                    enabled = false,
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    label = { Text("Username:") },
+                    onValueChange = {},
+                    value = editApi.username,
+                    enabled = false,
+                    singleLine = true
+                )
+
+                if (privateAPIDialog.value) {
+                    OutlinedTextField(
+                        label = { Text("Auth Code:") },
+                        value = authCodeInput,
+                        onValueChange = {
+                            authCodeInput = it
+                            authCodeError = false
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            KeyboardCapitalization.None,
+                            false,
+                            KeyboardType.Password,
+                            ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
+                        isError = authCodeError,
+                        singleLine = true
+                    )
+                }
+
+                OutlinedTextField(
+                    label = { Text("Password:") },
+                    value = passwordInput,
+                    onValueChange = {
+                        passwordInput = it
+                        passwordError = false
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        KeyboardCapitalization.None,
+                        false,
+                        KeyboardType.Password,
+                        ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
+                    isError = passwordError,
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                var buttonClicked by rememberSaveable { mutableStateOf(false) }
+
+                Row (verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = {
+                        showEditAPI.value = false
+                        vibrator.vibrate(
+                            VibrationEffect.createPredefined(
+                                VibrationEffect.EFFECT_DOUBLE_CLICK
+                            )
+                        )
+                    }
+                    ) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            Log.d("EditAPIOKButton", "OK Clicked")
+                            focusManager.clearFocus()
+                            buttonClicked = true
+
+                            //showNewAPIDialog = false
+                            vibrator.vibrate(
+                                VibrationEffect.createPredefined(
+                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                )
+                            )
+                        },
+                        enabled = passwordInput.isNotEmpty()
+                    ) {
+                        Text("OK")
+                    }
+                }
+
+                if (buttonClicked) {
+                    val authRequest = AuthCall()
+                    var authData: AuthResponse?
+
+                    LaunchedEffect(authRequest) {
+                        coroutineScope {
+                            authData = authRequest.getToken(apiName, username, passwordInput, authCodeInput)
+                        }
+                        if (authRequest.errorMessage.isEmpty()) {
+                            if (authData?.data?.token.isNullOrBlank()) {
+                                coroutineScope {
+                                    apiDao.update(
+                                        ApiSaveData(
+                                            api.name,
+                                            api.username,
+                                            passwordInput,
+                                            authCodeInput
+                                        )
+                                    )
+                                }
+                                // token success
+                                Toast.makeText(
+                                    editApiContext,
+                                    "API Added Successfully!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                Log.d("AuthRequest", "API Authenticated Successfully!")
+                                apis = apiDao.getAll()
+                                showEditAPI.value = false
+                            }
+
+                        } else {
+                            // error handling
+                            Log.d("EditAPIAuth", authRequest.errorMessage)
+
+                            if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
+                                if (connectionAvailable){
+                                    Toast.makeText(
+                                        mainContext,
+                                        "Incorrect API name.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                                else {
+                                    Toast.makeText(
+                                        mainContext,
+                                        "You must be online to continue.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } else if (authRequest.errorMessage == "HTTP 404 ") {
+                                Toast.makeText(
+                                    mainContext,
+                                    "Incorrect Username.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             } else if (authRequest.errorMessage == "HTTP 403 ") {
                                 Toast.makeText(
                                     mainContext,

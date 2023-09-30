@@ -13,14 +13,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
 
+// Data class for API saves
 @Entity(tableName = "apis", primaryKeys = ["name", "username"])
 data class ApiSaveData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "username") val username: String,
     @ColumnInfo(name = "password") val password: String,
-    @ColumnInfo(name = "auth_code") val authCode: String?
+    @ColumnInfo(name = "auth_code") val authCode: String
 )
 
+// Database Access Object for interracting with the api list database
 @Dao
 interface ApiSaveDao {
     @Query("SELECT * FROM apis")
@@ -39,6 +41,7 @@ interface ApiSaveDao {
     suspend fun deleteAll()
 }
 
+// The database class for accessing the database
 @Database(entities = [ApiSaveData::class], version = 1, exportSchema = false)
 abstract class ApiSaveDatabase : RoomDatabase() {
     abstract fun apiSaveDao(): ApiSaveDao
