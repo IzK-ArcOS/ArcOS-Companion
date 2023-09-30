@@ -22,7 +22,7 @@ data class ApiSaveData(
     @ColumnInfo(name = "auth_code") val authCode: String
 )
 
-// Database Access Object for interracting with the api list database
+// Database Access Object for interacting with the api list database
 @Dao
 interface ApiSaveDao {
     @Query("SELECT * FROM apis")
