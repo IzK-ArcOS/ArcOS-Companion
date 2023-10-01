@@ -2,7 +2,7 @@ package com.blockyheadman.arcoscompanion.data
 
 import com.google.gson.annotations.SerializedName
 
-data class Message(
+data class MessageList(
     @SerializedName("vaild")
     val valid: Boolean,
     @SerializedName("data")
@@ -17,9 +17,9 @@ data class MessageData(
     @SerializedName("partialBody")
     val partialBody: String,
     @SerializedName("timestamp")
-    val timestamp: Int,
+    val timestamp: Long,
     @SerializedName("replyingTo")
-    val replyingTo: String,
+    val replyingTo: Int?,
     @SerializedName("id")
     val id: Int,
     @SerializedName("read")

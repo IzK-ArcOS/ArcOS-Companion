@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.blockyheadman.arcoscompanion.data.Message
+import com.blockyheadman.arcoscompanion.data.MessageList
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.async
@@ -68,8 +68,8 @@ class ApiCall {
         return null
     }
 
-    suspend fun getMessages(apiName: String, auth: String): Message? {
-        var data: Message
+    suspend fun getMessages(apiName: String, auth: String): MessageList? {
+        var data: MessageList? = null
 
         try {
             coroutineScope {
@@ -81,15 +81,14 @@ class ApiCall {
                     )
 
                     Log.d("JSONOutput", json)
-                    data = Gson().fromJson(json, Message::class.java)
-                    Log.d("AuthOutput", data.toString())
-                    return@async data
+                    data = Gson().fromJson(json, MessageList::class.java)
+                    Log.d("MessageOutput", data.toString())
                 }.await()
             }
         } catch (e: Exception) {
             errorMessage = e.message.toString()
         }
 
-        return null
+        return data
     }
 }

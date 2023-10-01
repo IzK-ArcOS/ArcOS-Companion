@@ -189,7 +189,7 @@ fun CompanionApp() {
         }
     }
 
-    ArcOSCompanionTheme (darkTheme, dynamicColor.value) {
+    ArcOSCompanionTheme(darkTheme, dynamicColor.value) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -203,7 +203,7 @@ fun CompanionApp() {
                             ) {
                                 when (selectedNavBarItem) {
                                     0 -> Text("ArcOS Companion")
-                                    1 -> Text("Servers")
+                                    1 -> Text("APIs")
                                     2 -> Text("Messages")
                                     else -> Text("Settings")
                                 }

@@ -1,6 +1,6 @@
 package com.blockyheadman.arcoscompanion.data.network
 
-import com.blockyheadman.arcoscompanion.data.Message
+import com.blockyheadman.arcoscompanion.data.MessageList
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -12,7 +12,7 @@ interface APIService {
     suspend fun getAuth(@Header("authorization") auth: String, @Query("ac") authCode: String?): AuthResponse
 
     @GET("messages/list")
-    suspend fun getMessageList(@Header("authorization") auth: String): List<Message>
+    suspend fun getMessageList(@Header("authorization") auth: String): MessageList
 
     companion object {
         private var apiService: APIService? = null

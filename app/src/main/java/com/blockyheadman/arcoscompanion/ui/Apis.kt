@@ -99,7 +99,7 @@ fun ServersPage(externalPadding: PaddingValues) {
 
     var serverTypeTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    Scaffold (
+    Scaffold(
         modifier = Modifier
             .padding(externalPadding),
         topBar = {
@@ -112,21 +112,21 @@ fun ServersPage(externalPadding: PaddingValues) {
                 },
                 tabs = {
                     Tab(
-                        selected = serverTypeTabIndex==0,
+                        selected = serverTypeTabIndex == 0,
                         onClick = {
                             serverTypeTabIndex = 0
                             privateAPIDialog.value = false
-                                  },
+                        },
                         modifier = Modifier.height(32.dp)
                     ) {
                         Text("Public APIs")
                     }
                     Tab(
-                        selected = serverTypeTabIndex==1,
+                        selected = serverTypeTabIndex == 1,
                         onClick = {
                             serverTypeTabIndex = 1
                             privateAPIDialog.value = true
-                                  },
+                        },
                         modifier = Modifier.height(32.dp)
                     ) {
                         Text("Private APIs")
@@ -179,11 +179,13 @@ fun ServersPage(externalPadding: PaddingValues) {
                         if (apis.isEmpty()) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center) {
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text("There's not much to see here..")
                             }
                         }
                     }
+
                     1 -> {
                         items(apis.size) {
                             if (apis[it].authCode.isNotBlank()) ApiCard(apis[it]) // private = true
@@ -191,13 +193,15 @@ fun ServersPage(externalPadding: PaddingValues) {
                         if (apis.isEmpty()) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center) {
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text("There's not much to see here..")
                             }
                         }
                     }
+
                     else -> item {
-                        Text (
+                        Text(
                             text = "This page shouldn't exist.\nPlease report this issue.",
                             textAlign = TextAlign.Center
                         )
@@ -305,18 +309,19 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                         onDismissRequest = { settingsExpanded = false }
                     ) {
 
-                        DropdownMenuItem(text = { Text("Edit") }, onClick = {
-                            runBlocking {
-                                coroutineScope {
-                                    launch(Dispatchers.IO) {
-                                        // Edit info
-                                        settingsExpanded = false
-                                        editApi = data
-                                        showEditAPI.value = true
+                        DropdownMenuItem(text = { Text("Edit") },
+                            onClick = {
+                                runBlocking {
+                                    coroutineScope {
+                                        launch(Dispatchers.IO) {
+                                            // Edit info
+                                            settingsExpanded = false
+                                            editApi = data
+                                            showEditAPI.value = true
+                                        }
                                     }
                                 }
-                            }
-                        },
+                            },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
@@ -324,18 +329,18 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                                 )
                             }
                         )
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = {
-                            runBlocking {
-                                coroutineScope {
-                                    launch(Dispatchers.IO) {
-                                        apiDao.delete(data)
-                                        settingsExpanded = false
-                                        apis = apiDao.getAll()
+                        DropdownMenuItem(text = { Text("Delete") },
+                            onClick = {
+                                runBlocking {
+                                    coroutineScope {
+                                        launch(Dispatchers.IO) {
+                                            apiDao.delete(data)
+                                            settingsExpanded = false
+                                            apis = apiDao.getAll()
+                                        }
                                     }
                                 }
-                            }
-
-                        },
+                            },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
@@ -346,7 +351,7 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                     }
                 }
             }
-            Row (
+            Row(
                 modifier = Modifier.padding(start = 6.dp)
             ) {
                 Text(
@@ -390,7 +395,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
 
             val mainContext = LocalContext.current
 
-            Column (
+            Column(
                 Modifier
                     .fillMaxSize()
                     .padding(4.dp),
@@ -497,7 +502,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
 
                 var buttonClicked by rememberSaveable { mutableStateOf(false) }
 
-                Row (verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         showAddAPI.value = false
                         vibrator.vibrate(
@@ -535,7 +540,12 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
 
                     LaunchedEffect(authRequest) {
                         coroutineScope {
-                            authData = authRequest.getToken(apiInput, usernameInput, passwordInput, authCodeInput)
+                            authData = authRequest.getToken(
+                                apiInput,
+                                usernameInput,
+                                passwordInput,
+                                authCodeInput
+                            )
                         }
                         if (authRequest.errorMessage.isEmpty()) {
                             if (authData?.data?.token.isNullOrBlank()) {
@@ -567,16 +577,15 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                             Log.d("AddAPIAuth", authRequest.errorMessage)
 
                             if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
-                                if (connectionAvailable){
+                                if (connectionAvailable) {
                                     Toast.makeText(
                                         mainContext,
-                                    "Incorrect API name.\n" +
-                                            "Try using 'community.arcapi.nl'.",
+                                        "Incorrect API name.\n" +
+                                                "Try using 'community.arcapi.nl'.",
                                         Toast.LENGTH_LONG
                                     ).show()
                                     apiError = true
-                                }
-                                else {
+                                } else {
                                     Toast.makeText(
                                         mainContext,
                                         "You must be online to continue.",
@@ -657,7 +666,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
 
             val mainContext = LocalContext.current
 
-            Column (
+            Column(
                 Modifier
                     .fillMaxSize()
                     .padding(4.dp),
@@ -739,7 +748,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
 
                 var buttonClicked by rememberSaveable { mutableStateOf(false) }
 
-                Row (verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         showEditAPI.value = false
                         vibrator.vibrate(
@@ -777,7 +786,12 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
 
                     LaunchedEffect(authRequest) {
                         coroutineScope {
-                            authData = authRequest.getToken(apiName, username, passwordInput, authCodeInput)
+                            authData = authRequest.getToken(
+                                apiName,
+                                username,
+                                passwordInput,
+                                authCodeInput
+                            )
                         }
                         if (authRequest.errorMessage.isEmpty()) {
                             authData?.data?.token?.let { Log.d("AuthRequest", it) }
@@ -810,14 +824,13 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                             Log.d("EditAPIAuth", authRequest.errorMessage)
 
                             if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
-                                if (connectionAvailable){
+                                if (connectionAvailable) {
                                     Toast.makeText(
                                         mainContext,
                                         "Incorrect API name.",
                                         Toast.LENGTH_LONG
                                     ).show()
-                                }
-                                else {
+                                } else {
                                     Toast.makeText(
                                         mainContext,
                                         "You must be online to continue.",
