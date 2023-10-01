@@ -69,11 +69,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.R
+import com.blockyheadman.arcoscompanion.apiDao
 import com.blockyheadman.arcoscompanion.connectivityManager
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
-import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
-import com.blockyheadman.arcoscompanion.data.network.AuthCall
+import com.blockyheadman.arcoscompanion.data.network.ApiCall
 import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +88,6 @@ lateinit var showAddAPI: MutableState<Boolean>
 lateinit var showEditAPI: MutableState<Boolean>
 lateinit var editApi: ApiSaveData
 
-lateinit var apiDao: ApiSaveDao
 var apis by mutableStateOf(emptyList<ApiSaveData>())
 
 @Composable
@@ -153,11 +152,8 @@ fun ServersPage(externalPadding: PaddingValues) {
         }
     ) { innerPadding ->
 
-        val mainContext = LocalContext.current
+        //val mainContext = LocalContext.current
 
-        val db = ApiSaveDatabase.getInstance(mainContext)
-
-        apiDao = db.apiSaveDao()
         //apis by rememberSaveable { mutableStateOf(emptyList<ApiSaveData>()) } //: List<ApiSaveData>
 
         Box(
@@ -534,7 +530,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                 }
 
                 if (buttonClicked) {
-                    val authRequest = AuthCall()
+                    val authRequest = ApiCall()
                     var authData: AuthResponse?
 
                     LaunchedEffect(authRequest) {
@@ -549,7 +545,8 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                             apiInput,
                                             usernameInput,
                                             passwordInput,
-                                            authCodeInput
+                                            authCodeInput,
+                                            //authData?.data?.token
                                         )
                                     )
                                 }
@@ -775,7 +772,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                 }
 
                 if (buttonClicked) {
-                    val authRequest = AuthCall()
+                    val authRequest = ApiCall()
                     var authData: AuthResponse?
 
                     LaunchedEffect(authRequest) {
@@ -783,6 +780,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                             authData = authRequest.getToken(apiName, username, passwordInput, authCodeInput)
                         }
                         if (authRequest.errorMessage.isEmpty()) {
+                            authData?.data?.token?.let { Log.d("AuthRequest", it) }
                             if (authData?.data?.token.isNullOrBlank()) {
                                 coroutineScope {
                                     apiDao.update(
@@ -790,7 +788,8 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                                             api.name,
                                             api.username,
                                             passwordInput,
-                                            authCodeInput
+                                            authCodeInput,
+                                            //authData?.data?.token
                                         )
                                     )
                                 }

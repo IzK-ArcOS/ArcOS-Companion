@@ -1,41 +1,32 @@
 package com.blockyheadman.arcoscompanion
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
-import android.content.pm.PackageManager
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,21 +40,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.blockyheadman.arcoscompanion.data.ApiSaveDao
+import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
 import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.data.navBarItems
 import com.blockyheadman.arcoscompanion.ui.HomePage
@@ -75,13 +67,46 @@ import kotlinx.coroutines.coroutineScope
 
 lateinit var vibrator: Vibrator
 lateinit var connectivityManager: ConnectivityManager
+lateinit var notificationManager: NotificationManager
+
+lateinit var apiDao: ApiSaveDao
+
+object NotificationIDs {
+    const val NOTIFICATION_ID = 112
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Register the channel with the system. You can't change the importance
+        // or other notification behaviors after this.
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        val messageChannel = NotificationChannel(
+            getString(R.string.message_notifs_ID),
+            getString(R.string.message_notifs_name),
+            NotificationManager.IMPORTANCE_HIGH
+        )
+
+        messageChannel.enableLights(true)
+        messageChannel.lightColor = Color.Yellow.toArgb()
+        messageChannel.enableVibration(true)
+        messageChannel.description = getString(R.string.message_notifs_desc)
+
+        notificationManager.createNotificationChannel(messageChannel)
+
+        // Create the NotificationChannel.
+        /*val name = getString(R.string.message_notifs_name)
+        val descriptionText = getString(R.string.message_notifs_desc)
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val mChannel = NotificationChannel(getString(R.string.message_notifs_ID), name, importance)
+        mChannel.description = descriptionText
+        notificationManager.createNotificationChannel(mChannel)*/
+
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         connectivityManager = getSystemService(ConnectivityManager::class.java) as ConnectivityManager
+
         installSplashScreen()
         setContent {
             CompanionApp()
@@ -114,10 +139,14 @@ fun CompanionApp() {
         else -> systemDarkTheme
     }
 
-    var selectedNavBarItem by rememberSaveable { mutableStateOf(0) }
+    var selectedNavBarItem by rememberSaveable { mutableIntStateOf(0) }
 
     var showConnectionLost by rememberSaveable { mutableStateOf(true) }
     var connectionAvailable by rememberSaveable { mutableStateOf(true) }
+
+    val db = ApiSaveDatabase.getInstance(context)
+    apiDao = db.apiSaveDao()
+
     LaunchedEffect(connectionAvailable) {
         coroutineScope {
             connectivityManager.registerDefaultNetworkCallback(object :
@@ -141,20 +170,20 @@ fun CompanionApp() {
                     network: Network,
                     networkCapabilities: NetworkCapabilities
                 ) {
-                    Log.d(
+                    /*Log.d(
                         "ConnectionManager",
                         "The default network changed capabilities: $networkCapabilities"
-                    )
+                    )*/
                 }
 
                 override fun onLinkPropertiesChanged(
                     network: Network,
                     linkProperties: LinkProperties
                 ) {
-                    Log.d(
+                    /*Log.d(
                         "ConnectionManager",
                         "The default network changed link properties: $linkProperties"
-                    )
+                    )*/
                 }
             })
         }
@@ -271,84 +300,16 @@ fun CompanionApp() {
                     0 -> { HomePage(innerPadding) }
                     1 -> { ServersPage(innerPadding) }
                     2 -> { MessagesPage(innerPadding) }
-                    else -> { SettingsPage(innerPadding) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun Greeting() {
-    var showGreeting by rememberSaveable { mutableStateOf(true) }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            // Permission Accepted: Do something
-            Log.d("MainActivity", "PERMISSION GRANTED")
-        } else {
-            // Permission Denied: Do something
-            Log.d("MainActivity", "PERMISSION DENIED")
-        }
-    }
-    val context = LocalContext.current
-
-    if (showGreeting) {
-        Dialog({}) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(205.dp)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    MaterialTheme.colorScheme.secondaryContainer,
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "Welcome to the ArcOS Companion App!",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "This app has some permissions we need you to grant!",
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Button(onClick = {
-                            when (PackageManager.PERMISSION_GRANTED) {
-                                ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.POST_NOTIFICATIONS
-                                ) -> {
-                                    Log.d("MainActivity", "Code requires permission")
-                                }
-
-                                else -> {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                    }
-                                }
-                            }
-
-                        }) {
-                            Text("Sure thing!")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = { showGreeting = false }) {
-                            Text("No thanks.")
+                    3 -> { SettingsPage(innerPadding) }
+                    else -> {
+                        Box (
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "This page shouldn't exist.\nPlease report this issue.",
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 }
@@ -357,7 +318,7 @@ fun Greeting() {
     }
 }
 
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)
+/*@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)
 @Composable
 fun DarkGreetingPreview() {
     CompanionApp()
@@ -367,4 +328,4 @@ fun DarkGreetingPreview() {
 @Composable
 fun LightGreetingPreview() {
     CompanionApp()
-}
+}*/

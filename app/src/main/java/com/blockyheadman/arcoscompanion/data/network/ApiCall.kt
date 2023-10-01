@@ -5,35 +5,36 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.blockyheadman.arcoscompanion.data.Message
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 data class AuthData(
-    @SerializedName(value = "username")
+    @SerializedName("username")
     val username: String,
-    @SerializedName(value = "token")
+    @SerializedName("token")
     val token: String
 )
 
 data class AuthError(
-    @SerializedName(value = "title")
+    @SerializedName("title")
     val title: String,
-    @SerializedName(value = "message")
+    @SerializedName("message")
     val message: String
 )
 
 data class AuthResponse(
-    @SerializedName(value = "data")
+    @SerializedName("data")
     val data: AuthData,
-    @SerializedName(value = "valid")
+    @SerializedName("valid")
     val valid: Boolean,
-    @SerializedName(value = "error")
+    @SerializedName("error")
     val error: AuthError
 )
 
-class AuthCall {
+class ApiCall {
     var errorMessage: String by mutableStateOf("")
 
     suspend fun getToken(apiName: String, username: String, password: String, authCode: String?): AuthResponse? {
@@ -43,7 +44,7 @@ class AuthCall {
         try {
             coroutineScope {
                 async {
-                    val apiService = APIService.getInstance(apiName, authCode)
+                    val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
                         apiService.getAuth(
                             "Basic " + Base64.encodeToString(
@@ -58,6 +59,31 @@ class AuthCall {
                     auth = Gson().fromJson(json, AuthResponse::class.java)
                     Log.d("AuthOutput", auth.toString())
                     return@async auth
+                }.await()
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message.toString()
+        }
+
+        return null
+    }
+
+    suspend fun getMessages(apiName: String, auth: String): Message? {
+        var data: Message
+
+        try {
+            coroutineScope {
+                async {
+                    val apiService = APIService.getInstance(apiName)
+                    val json = Gson().toJson(
+                        apiService.getMessageList("Bearer $auth"
+                        )
+                    )
+
+                    Log.d("JSONOutput", json)
+                    data = Gson().fromJson(json, Message::class.java)
+                    Log.d("AuthOutput", data.toString())
+                    return@async data
                 }.await()
             }
         } catch (e: Exception) {

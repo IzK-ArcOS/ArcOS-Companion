@@ -19,7 +19,7 @@ data class NavigationBarItem(
 
 val navBarItems = listOf(
     NavigationBarItem(Icons.Outlined.Home, Icons.Filled.Home, "Home"),
-    NavigationBarItem(Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, "Servers"),
+    NavigationBarItem(Icons.AutoMirrored.Outlined.List, Icons.AutoMirrored.Filled.List, "APIs"),
     NavigationBarItem(Icons.Outlined.Email, Icons.Filled.Email, "Messages"),
     NavigationBarItem(Icons.Outlined.Settings, Icons.Filled.Settings, "Settings")
 )
