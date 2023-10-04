@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
+import com.blockyheadman.arcoscompanion.data.ApiSaveData
 import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
 import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.data.navBarItems
@@ -63,13 +64,16 @@ import com.blockyheadman.arcoscompanion.ui.MessagesPage
 import com.blockyheadman.arcoscompanion.ui.ServersPage
 import com.blockyheadman.arcoscompanion.ui.SettingsPage
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 lateinit var vibrator: Vibrator
 lateinit var connectivityManager: ConnectivityManager
 lateinit var notificationManager: NotificationManager
 
 lateinit var apiDao: ApiSaveDao
+var apis by mutableStateOf(emptyList<ApiSaveData>())
 
 object NotificationIDs {
     const val NOTIFICATION_ID = 112
@@ -295,6 +299,14 @@ fun CompanionApp() {
                     }
                 }
             ) { innerPadding ->
+
+                LaunchedEffect(Unit) {
+                    coroutineScope {
+                        launch(Dispatchers.Main) {
+                            apis = apiDao.getAll()
+                        }
+                    }
+                }
 
                 when (selectedNavBarItem) {
                     0 -> { HomePage(innerPadding) }

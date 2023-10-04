@@ -42,7 +42,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -51,6 +53,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.blockyheadman.arcoscompanion.NotificationIDs
 import com.blockyheadman.arcoscompanion.R
+import com.blockyheadman.arcoscompanion.apis
 import com.blockyheadman.arcoscompanion.data.MessageData
 import com.blockyheadman.arcoscompanion.data.MessageList
 import com.blockyheadman.arcoscompanion.data.navBarItems
@@ -98,6 +102,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
         permissionGranted = isGranted
     }
 
+    var apiTabIndex by rememberSaveable { mutableIntStateOf(0) }
+
     permissionGranted = when (PackageManager.PERMISSION_GRANTED) {
         ContextCompat.checkSelfPermission(
             context,
@@ -106,12 +112,30 @@ fun MessagesPage(externalPadding: PaddingValues) {
         else -> false
     }
 
-    Box (
+    Scaffold (
         modifier = Modifier
             .padding(externalPadding)
             .fillMaxSize(),
+        topBar = {
+            ScrollableTabRow(selectedTabIndex = apiTabIndex, tabs = {
+                apis.forEach { api ->
+                    Tab(
+                        selected = apiTabIndex == apis.indexOf(api),
+                        onClick = { apiTabIndex = apis.indexOf(api) },
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    ) {
+                        Text("(${api.username})")
+                        Text(
+                            text = api.name,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false
+                        )
+                    }
+                }
+            })
+        }
         //contentAlignment = Alignment.Center
-    ) {
+    ) { innerPadding ->
         //Text("There's not much to see here..")
 
         //val mainContext = LocalContext.current
@@ -123,14 +147,18 @@ fun MessagesPage(externalPadding: PaddingValues) {
         LaunchedEffect(Unit) {
             coroutineScope {
                 launch(Dispatchers.IO) {
-                    // TODO Get auth code input from api
-                    messageData = getMessages("")
+                    Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
+                    Log.d("GET MESSAGES", "Token: ${apis[apiTabIndex].name}")
+                    messageData = getMessages(
+                        apis[apiTabIndex].name,
+                        apis[apiTabIndex].token // TODO get token to save in api save.
+                    )
                 }
             }
         }
 
         LazyColumn (
-            Modifier.padding(top = 52.dp)
+            Modifier.padding(innerPadding)//.padding(top = 52.dp)
         ) {
             messageData?.data?.let { list ->
                 items(list.size) {
@@ -140,7 +168,9 @@ fun MessagesPage(externalPadding: PaddingValues) {
         }
 
         Box (
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentAlignment = Alignment.TopCenter
         ) {
             Row {
@@ -197,10 +227,14 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 ) {
                     ElevatedButton(
                         onClick = {
+                            Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
+                            Log.d("GET MESSAGES", "Api auth code: ${apis[apiTabIndex].authCode}")
                             val scope = CoroutineScope(Job())
                             scope.launch {
-                                // TODO Get auth code input from api
-                                messageData = getMessages("")
+                                messageData = getMessages(
+                                    apis[apiTabIndex].name,
+                                    apis[apiTabIndex].token // TODO get token to save in api save.
+                                )
                             }
                         }
                     ) {
@@ -318,7 +352,7 @@ fun requestNotifications(context: Context) {
     }
 }
 
-suspend fun getMessages(authCode: String): MessageList? {
+suspend fun getMessages(apiName: String, authToken: String): MessageList? {
     val messageRequest = ApiCall()
     var messageData: MessageList? = null
 
@@ -326,8 +360,8 @@ suspend fun getMessages(authCode: String): MessageList? {
         runBlocking {
             launch(Dispatchers.IO) {
                 messageData = messageRequest.getMessages(
-                    "community.arcapi.nl",
-                    authCode
+                    apiName,
+                    authToken
                 )
             }
         }

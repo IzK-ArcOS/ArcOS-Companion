@@ -76,8 +76,7 @@ class ApiCall {
                 async {
                     val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
-                        apiService.getMessageList("Bearer $auth"
-                        )
+                        apiService.getMessageList("Bearer $auth")
                     )
 
                     Log.d("JSONOutput", json)

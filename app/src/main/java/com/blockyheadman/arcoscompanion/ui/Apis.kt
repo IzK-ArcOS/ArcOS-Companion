@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.apiDao
+import com.blockyheadman.arcoscompanion.apis
 import com.blockyheadman.arcoscompanion.connectivityManager
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
@@ -88,8 +89,6 @@ lateinit var showAddAPI: MutableState<Boolean>
 lateinit var showEditAPI: MutableState<Boolean>
 lateinit var editApi: ApiSaveData
 
-var apis by mutableStateOf(emptyList<ApiSaveData>())
-
 @Composable
 fun ServersPage(externalPadding: PaddingValues) {
 
@@ -97,14 +96,14 @@ fun ServersPage(externalPadding: PaddingValues) {
     showAddAPI = rememberSaveable { mutableStateOf(false) }
     showEditAPI = rememberSaveable { mutableStateOf(false) }
 
-    var serverTypeTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    var apiTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
         modifier = Modifier
             .padding(externalPadding),
         topBar = {
             TabRow(
-                selectedTabIndex = serverTypeTabIndex,
+                selectedTabIndex = apiTabIndex,
                 divider = {
                     HorizontalDivider(
                         thickness = 1.dp
@@ -112,9 +111,9 @@ fun ServersPage(externalPadding: PaddingValues) {
                 },
                 tabs = {
                     Tab(
-                        selected = serverTypeTabIndex == 0,
+                        selected = apiTabIndex == 0,
                         onClick = {
-                            serverTypeTabIndex = 0
+                            apiTabIndex = 0
                             privateAPIDialog.value = false
                         },
                         modifier = Modifier.height(32.dp)
@@ -122,9 +121,9 @@ fun ServersPage(externalPadding: PaddingValues) {
                         Text("Public APIs")
                     }
                     Tab(
-                        selected = serverTypeTabIndex == 1,
+                        selected = apiTabIndex == 1,
                         onClick = {
-                            serverTypeTabIndex = 1
+                            apiTabIndex = 1
                             privateAPIDialog.value = true
                         },
                         modifier = Modifier.height(32.dp)
@@ -142,7 +141,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                 //privateAPIDialog.value = serverTypeTabIndex == 1
             }) {
                 Text(
-                    when (serverTypeTabIndex) {
+                    when (apiTabIndex) {
                         0 -> "New API"
                         else -> "New Private API"
                     }
@@ -171,7 +170,7 @@ fun ServersPage(externalPadding: PaddingValues) {
             }
 
             LazyColumn {
-                when (serverTypeTabIndex) {
+                when (apiTabIndex) {
                     0 -> {
                         items(apis.size) {
                             if (apis[it].authCode.isBlank()) ApiCard(apis[it]) // private = false
