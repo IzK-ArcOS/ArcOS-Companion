@@ -547,7 +547,9 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                             )
                         }
                         if (authRequest.errorMessage.isEmpty()) {
-                            if (authData?.data?.token.isNullOrBlank()) {
+                            Log.d("AuthRequestDebug", "Error message is empty!")
+                            if (!authData?.data?.token.isNullOrBlank()) {
+                                Log.d("AuthRequestDebug", "Token is not null!")
                                 coroutineScope {
                                     apiDao.insert(
                                         ApiSaveData(

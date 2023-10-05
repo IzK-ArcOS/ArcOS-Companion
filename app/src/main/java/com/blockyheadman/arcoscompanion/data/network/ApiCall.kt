@@ -8,8 +8,10 @@ import androidx.compose.runtime.setValue
 import com.blockyheadman.arcoscompanion.data.MessageList
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 
 data class AuthData(
     @SerializedName("username")
@@ -39,11 +41,10 @@ class ApiCall {
 
     suspend fun getToken(apiName: String, username: String, password: String, authCode: String?): AuthResponse? {
         //val apiService = APIService.getInstance(apiName, authCode)
-        val auth: AuthResponse
+        var auth: AuthResponse? = null
         try {
-            auth = coroutineScope {
-                async {
-
+            auth = runBlocking {
+                async(Dispatchers.IO) {
                     val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
                         apiService.getAuth(
@@ -56,21 +57,19 @@ class ApiCall {
                     )
 
                     Log.d("JSONOutput", json)
-                    Log.d(
-                        "AuthOutput",
-                        Gson().fromJson(json, AuthResponse::class.java).toString()
-                    )
-                    return@async Gson().fromJson(json, AuthResponse::class.java)
+                    val data = Gson().fromJson(json, AuthResponse::class.java)
+                    Log.d("AuthOutput", data.toString())
+                    return@async data
                 }
             }.await()
         } catch (e: Exception) {
             errorMessage = e.message.toString()
         }
 
-        return null
+        return auth
     }
 
-    suspend fun getMessages(apiName: String, auth: String): MessageList? {
+    suspend fun getMessages(apiName: String, authCode: String, auth: String): MessageList? {
         var data: MessageList? = null
 
         try {
@@ -78,7 +77,10 @@ class ApiCall {
                 async {
                     val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
-                        apiService.getMessageList("Bearer $auth")
+                        apiService.getMessageList(
+                            "Bearer $auth",
+                            authCode
+                        )
                     )
 
                     Log.d("JSONOutput", json)

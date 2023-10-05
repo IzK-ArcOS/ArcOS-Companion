@@ -358,7 +358,7 @@ suspend fun getTokenOld(apiName: String, username: String, password: String, aut
     return authData?.data?.token
 }
 
-suspend fun getToken(apiName: String, username: String, password: String, authCode: String): String? {
+suspend fun getAuthToken(apiName: String, username: String, password: String, authCode: String): String? {
     val authRequest = ApiCall()
     val authData: AuthResponse?
 
@@ -378,7 +378,7 @@ suspend fun getToken(apiName: String, username: String, password: String, authCo
         return null
     }
 
-    Log.e("getToken", "data: $authData")
+    Log.d("getToken", "data: $authData")
 
     if (authData == null) {
         Log.e("getToken", "Auth Data is null")
@@ -390,6 +390,7 @@ suspend fun getToken(apiName: String, username: String, password: String, authCo
         Log.d("TokenData", authData.data.token)
     } else {
         Log.e("TokenDataError", authRequest.errorMessage)
+        return null
     }
 
     return authData.data.token

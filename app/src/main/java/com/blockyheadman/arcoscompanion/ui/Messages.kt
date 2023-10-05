@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -75,7 +74,7 @@ import com.blockyheadman.arcoscompanion.data.MessageData
 import com.blockyheadman.arcoscompanion.data.MessageList
 import com.blockyheadman.arcoscompanion.data.navBarItems
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
-import com.blockyheadman.arcoscompanion.getToken
+import com.blockyheadman.arcoscompanion.getAuthToken
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,6 +105,9 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
     var apiTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
+    var messageData: MessageList? by rememberSaveable { mutableStateOf(null) }
+    var messageDataError by rememberSaveable { mutableStateOf(0) }
+
     permissionGranted = when (PackageManager.PERMISSION_GRANTED) {
         ContextCompat.checkSelfPermission(
             context,
@@ -119,22 +121,167 @@ fun MessagesPage(externalPadding: PaddingValues) {
             .padding(externalPadding)
             .fillMaxSize(),
         topBar = {
-            ScrollableTabRow(selectedTabIndex = apiTabIndex, tabs = {
-                apis.forEach { api ->
-                    Tab(
-                        selected = apiTabIndex == apis.indexOf(api),
-                        onClick = { apiTabIndex = apis.indexOf(api) },
-                        modifier = Modifier.padding(horizontal = 4.dp)
+            Column (
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ScrollableTabRow(selectedTabIndex = apiTabIndex, tabs = {
+                    apis.forEach { api ->
+                        Tab(
+                            selected = apiTabIndex == apis.indexOf(api),
+                            onClick = {
+                                apiTabIndex = apis.indexOf(api)
+                                val scope = CoroutineScope(Job())
+                                scope.launch {
+                                    // TODO Make this a function
+                                    messageData = null
+                                    messageDataError = 0
+
+                                    val token: String? = async {
+                                        getAuthToken(
+                                            apis[apiTabIndex].name,
+                                            apis[apiTabIndex].username,
+                                            apis[apiTabIndex].password,
+                                            apis[apiTabIndex].authCode
+                                        )
+                                    }.await()
+
+                                    if (token.isNullOrBlank()) {
+                                        Log.e("GET MESSAGES", "Empty token. Stopping..")
+                                        messageDataError = 1
+                                        return@launch
+                                    }
+
+                                    Log.d(
+                                        "GET MESSAGES",
+                                        "Api name: ${apis[apiTabIndex].name}"
+                                    )
+                                    Log.d("GET MESSAGES", "Token: $token")
+                                    messageData = getMessages(
+                                        apis[apiTabIndex].name,
+                                        apis[apiTabIndex].authCode,
+                                        token
+                                    )
+
+                                }
+                            },
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text("(${api.username})")
+                            Text(
+                                text = api.name,
+                                overflow = TextOverflow.Ellipsis,
+                                softWrap = false
+                            )
+                        }
+                    }
+                })
+                Row {
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = {
+                            PlainTooltip {
+                                Text("Enable Notifications")
+                            }
+                        },
+                        state = rememberTooltipState()
                     ) {
-                        Text("(${api.username})")
-                        Text(
-                            text = api.name,
-                            overflow = TextOverflow.Ellipsis,
-                            softWrap = false
-                        )
+                        ElevatedButton(
+                            onClick = {
+                                when (PackageManager.PERMISSION_GRANTED) {
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) -> {
+                                        Log.d("MessagesPage", "Code requires permission")
+                                        Toast.makeText(
+                                            context,
+                                            "Notifications are already enabled!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
+                                    else -> {
+                                        Log.d("MessagesPage", "Requesting permission")
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                        } else requestNotifications(context)
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (!permissionGranted) Icons.Outlined.Notifications
+                                else Icons.Filled.Notifications,
+                                contentDescription = if (!permissionGranted) "Enable notifications"
+                                else "Notifications enabled"
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = {
+                            PlainTooltip {
+                                Text("Reload Messages")
+                            }
+                        },
+                        state = rememberTooltipState()
+                    ) {
+                        ElevatedButton(
+                            onClick = {
+                                Log.d(
+                                    "GET MESSAGES",
+                                    "Api name: ${apis[apiTabIndex].name}"
+                                )
+                                Log.d(
+                                    "GET MESSAGES",
+                                    "Api auth code: ${apis[apiTabIndex].authCode}"
+                                )
+
+                                val scope = CoroutineScope(Job())
+                                scope.launch {
+                                    // TODO Make this a function
+                                    messageData = null
+                                    messageDataError = 0
+
+                                    val token: String? = async {
+                                        getAuthToken(
+                                            apis[apiTabIndex].name,
+                                            apis[apiTabIndex].username,
+                                            apis[apiTabIndex].password,
+                                            apis[apiTabIndex].authCode
+                                        )
+                                    }.await()
+
+                                    if (token.isNullOrBlank()) {
+                                        Log.e("GET MESSAGES", "Empty token. Stopping..")
+                                        messageDataError = 1
+                                        return@launch
+                                    }
+
+                                    Log.d(
+                                        "GET MESSAGES",
+                                        "Api name: ${apis[apiTabIndex].name}"
+                                    )
+                                    Log.d("GET MESSAGES", "Token: $token")
+                                    messageData = getMessages(
+                                        apis[apiTabIndex].name,
+                                        apis[apiTabIndex].authCode,
+                                        token
+                                    )
+
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Reload"
+                            )
+                        }
                     }
                 }
-            })
+
+            }
         }
         //contentAlignment = Alignment.Center
     ) { innerPadding ->
@@ -142,19 +289,15 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
         //val mainContext = LocalContext.current
 
-        var messageData: MessageList? by rememberSaveable { mutableStateOf(null) }
-        var messageDataError by rememberSaveable { mutableStateOf(0) }
-
-        // TODO Get apis to show cards of messages from specific servers.
-
         LaunchedEffect(Unit) {
             coroutineScope {
                 launch(Dispatchers.IO) {
+                    // TODO Make this a function
                     messageData = null
                     messageDataError = 0
 
                     val token: String? = async {
-                        getToken(
+                        getAuthToken(
                             apis[apiTabIndex].name,
                             apis[apiTabIndex].username,
                             apis[apiTabIndex].password,
@@ -162,7 +305,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         )
                     }.await()
 
-                    if (!token.isNullOrBlank()) {
+                    if (token.isNullOrBlank()) {
                         Log.e("GET MESSAGES", "Empty token. Stopping..")
                         messageDataError = 1
                         return@launch
@@ -170,12 +313,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                     Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
                     Log.d("GET MESSAGES", "Token: $token")
-                    messageData = token?.let {
-                        getMessages(
-                            apis[apiTabIndex].name,
-                            it // TODO get token to save in api save.
-                        )
-                    }
+                    messageData = getMessages(
+                        apis[apiTabIndex].name,
+                        apis[apiTabIndex].authCode,
+                        token
+                    )
 
                 }
             }
@@ -195,107 +337,6 @@ fun MessagesPage(externalPadding: PaddingValues) {
             messageData?.data?.let { list ->
                 items(list.size) {
                     MessageCard(messageData!!.data[it])
-                }
-            }
-        }
-
-        Box (
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Row {
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    tooltip = {
-                        PlainTooltip {
-                            Text("Enable Notifications")
-                        }
-                    },
-                    state = rememberTooltipState()
-                ) {
-                    ElevatedButton(
-                        onClick = {
-                            when (PackageManager.PERMISSION_GRANTED) {
-                                ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.POST_NOTIFICATIONS
-                                ) -> {
-                                    Log.d("MessagesPage", "Code requires permission")
-                                    Toast.makeText(
-                                        context,
-                                        "Notifications are already enabled!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-
-                                else -> {
-                                    Log.d("MessagesPage", "Requesting permission")
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                    } else requestNotifications(context)
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (!permissionGranted) Icons.Outlined.Notifications
-                            else Icons.Filled.Notifications,
-                            contentDescription = if (!permissionGranted) "Enable notifications"
-                            else "Notifications enabled"
-                        )
-                    }
-                }
-                Spacer(Modifier.width(4.dp))
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    tooltip = {
-                        PlainTooltip {
-                            Text("Reload Messages")
-                        }
-                    },
-                    state = rememberTooltipState()
-                ) {
-                    ElevatedButton(
-                        onClick = {
-                            Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
-                            Log.d("GET MESSAGES", "Api auth code: ${apis[apiTabIndex].authCode}")
-                            val scope = CoroutineScope(Job())
-                            scope.launch {
-                                messageData = null
-                                messageDataError = 0
-
-                                val token: String? = async {
-                                    getToken(
-                                        apis[apiTabIndex].name,
-                                        apis[apiTabIndex].username,
-                                        apis[apiTabIndex].password,
-                                        apis[apiTabIndex].authCode
-                                    )
-                                }.await()
-
-                                if (token.isNullOrBlank()) {
-                                    Log.e("GET MESSAGES", "Empty token. Stopping..")
-                                    messageDataError = 1
-                                    return@launch
-                                }
-
-                                Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
-                                Log.d("GET MESSAGES", "Token: $token")
-                                messageData = getMessages(
-                                    apis[apiTabIndex].name,
-                                    token // TODO get token to save in api save.
-                                )
-
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reload"
-                        )
-                    }
                 }
             }
         }
@@ -405,7 +446,7 @@ fun requestNotifications(context: Context) {
     }
 }
 
-suspend fun getMessages(apiName: String, authToken: String): MessageList? {
+suspend fun getMessages(apiName: String, authCode: String, authToken: String): MessageList? {
     val messageRequest = ApiCall()
     var messageData: MessageList? = null
 
@@ -414,6 +455,7 @@ suspend fun getMessages(apiName: String, authToken: String): MessageList? {
             launch(Dispatchers.IO) {
                 messageData = messageRequest.getMessages(
                     apiName,
+                    authCode,
                     authToken
                 )
             }

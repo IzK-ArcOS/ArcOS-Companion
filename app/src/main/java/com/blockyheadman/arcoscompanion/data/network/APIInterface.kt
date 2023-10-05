@@ -9,10 +9,16 @@ import retrofit2.http.Query
 
 interface APIService {
     @GET("/auth")
-    suspend fun getAuth(@Header("authorization") auth: String, @Query("ac") authCode: String?): AuthResponse
+    suspend fun getAuth(
+        @Header("authorization") auth: String,
+        @Query("ac") authCode: String?
+    ): AuthResponse
 
     @GET("messages/list")
-    suspend fun getMessageList(@Header("authorization") auth: String): MessageList
+    suspend fun getMessageList(
+        @Header("authorization") auth: String,
+        @Query("ac") authCode: String
+    ): MessageList
 
     companion object {
         private var apiService: APIService? = null
