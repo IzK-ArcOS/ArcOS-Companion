@@ -38,12 +38,11 @@ class ApiCall {
     var errorMessage: String by mutableStateOf("")
 
     suspend fun getToken(apiName: String, username: String, password: String, authCode: String?): AuthResponse? {
-        var auth: AuthResponse
-
         //val apiService = APIService.getInstance(apiName, authCode)
         try {
             coroutineScope {
                 async {
+                    var auth: AuthResponse
                     val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
                         apiService.getAuth(

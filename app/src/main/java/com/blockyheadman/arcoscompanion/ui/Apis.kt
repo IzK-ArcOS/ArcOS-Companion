@@ -554,8 +554,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                             apiInput,
                                             usernameInput,
                                             passwordInput,
-                                            authCodeInput,
-                                            //authData?.data?.token
+                                            authCodeInput
                                         )
                                     )
                                 }

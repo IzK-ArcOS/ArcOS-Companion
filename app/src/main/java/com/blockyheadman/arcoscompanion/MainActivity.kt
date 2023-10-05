@@ -59,12 +59,15 @@ import com.blockyheadman.arcoscompanion.data.ApiSaveData
 import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
 import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.data.navBarItems
+import com.blockyheadman.arcoscompanion.data.network.ApiCall
+import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.ui.HomePage
 import com.blockyheadman.arcoscompanion.ui.MessagesPage
 import com.blockyheadman.arcoscompanion.ui.ServersPage
 import com.blockyheadman.arcoscompanion.ui.SettingsPage
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -328,6 +331,31 @@ fun CompanionApp() {
             }
         }
     }
+}
+
+suspend fun getToken(apiName: String, username: String, password: String, authCode: String): String? {
+    val authRequest = ApiCall()
+    var authData: AuthResponse?
+
+    coroutineScope {
+        authData = async {
+            authRequest.getToken(
+                apiName,
+                username,
+                password,
+                authCode
+            )
+        }.await()
+        authData?.data?.let { Log.d("token", it.token) }
+        if (authRequest.errorMessage.isEmpty()) {
+            Log.d("AuthData", authData.toString())
+            authData?.data?.token?.let { Log.d("TokenData", it) }
+        } else {
+            Log.e("TokenDataError", authRequest.errorMessage)
+        }
+    }
+
+    return authData?.data?.token
 }
 
 /*@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)

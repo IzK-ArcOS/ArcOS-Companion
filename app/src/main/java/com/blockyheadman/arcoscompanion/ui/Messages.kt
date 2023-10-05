@@ -75,10 +75,12 @@ import com.blockyheadman.arcoscompanion.data.MessageData
 import com.blockyheadman.arcoscompanion.data.MessageList
 import com.blockyheadman.arcoscompanion.data.navBarItems
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
+import com.blockyheadman.arcoscompanion.getToken
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -141,20 +143,50 @@ fun MessagesPage(externalPadding: PaddingValues) {
         //val mainContext = LocalContext.current
 
         var messageData: MessageList? by rememberSaveable { mutableStateOf(null) }
+        var messageDataError by rememberSaveable { mutableStateOf(0) }
 
         // TODO Get apis to show cards of messages from specific servers.
 
         LaunchedEffect(Unit) {
             coroutineScope {
                 launch(Dispatchers.IO) {
+                    messageData = null
+                    messageDataError = 0
+
+                    val token: String? = async {
+                        getToken(
+                            apis[apiTabIndex].name,
+                            apis[apiTabIndex].username,
+                            apis[apiTabIndex].password,
+                            apis[apiTabIndex].authCode
+                        )
+                    }.await()
+
+                    if (!token.isNullOrBlank()) {
+                        Log.e("GET MESSAGES", "Empty token. Stopping..")
+                        messageDataError = 1
+                        return@launch
+                    }
+
                     Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
-                    Log.d("GET MESSAGES", "Token: ${apis[apiTabIndex].name}")
-                    messageData = getMessages(
-                        apis[apiTabIndex].name,
-                        apis[apiTabIndex].token // TODO get token to save in api save.
-                    )
+                    Log.d("GET MESSAGES", "Token: $token")
+                    messageData = token?.let {
+                        getMessages(
+                            apis[apiTabIndex].name,
+                            it // TODO get token to save in api save.
+                        )
+                    }
+
                 }
             }
+        }
+
+        when (messageDataError) {
+            1 -> Toast.makeText(
+                context,
+                "API information is incorrect",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         LazyColumn (
@@ -231,10 +263,31 @@ fun MessagesPage(externalPadding: PaddingValues) {
                             Log.d("GET MESSAGES", "Api auth code: ${apis[apiTabIndex].authCode}")
                             val scope = CoroutineScope(Job())
                             scope.launch {
+                                messageData = null
+                                messageDataError = 0
+
+                                val token: String? = async {
+                                    getToken(
+                                        apis[apiTabIndex].name,
+                                        apis[apiTabIndex].username,
+                                        apis[apiTabIndex].password,
+                                        apis[apiTabIndex].authCode
+                                    )
+                                }.await()
+
+                                if (token.isNullOrBlank()) {
+                                    Log.e("GET MESSAGES", "Empty token. Stopping..")
+                                    messageDataError = 1
+                                    return@launch
+                                }
+
+                                Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
+                                Log.d("GET MESSAGES", "Token: $token")
                                 messageData = getMessages(
                                     apis[apiTabIndex].name,
-                                    apis[apiTabIndex].token // TODO get token to save in api save.
+                                    token // TODO get token to save in api save.
                                 )
+
                             }
                         }
                     ) {
