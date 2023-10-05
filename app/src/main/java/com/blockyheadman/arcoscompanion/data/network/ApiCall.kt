@@ -39,10 +39,11 @@ class ApiCall {
 
     suspend fun getToken(apiName: String, username: String, password: String, authCode: String?): AuthResponse? {
         //val apiService = APIService.getInstance(apiName, authCode)
+        val auth: AuthResponse
         try {
-            coroutineScope {
+            auth = coroutineScope {
                 async {
-                    var auth: AuthResponse
+
                     val apiService = APIService.getInstance(apiName)
                     val json = Gson().toJson(
                         apiService.getAuth(
@@ -55,11 +56,13 @@ class ApiCall {
                     )
 
                     Log.d("JSONOutput", json)
-                    auth = Gson().fromJson(json, AuthResponse::class.java)
-                    Log.d("AuthOutput", auth.toString())
-                    return@async auth
-                }.await()
-            }
+                    Log.d(
+                        "AuthOutput",
+                        Gson().fromJson(json, AuthResponse::class.java).toString()
+                    )
+                    return@async Gson().fromJson(json, AuthResponse::class.java)
+                }
+            }.await()
         } catch (e: Exception) {
             errorMessage = e.message.toString()
         }

@@ -333,7 +333,7 @@ fun CompanionApp() {
     }
 }
 
-suspend fun getToken(apiName: String, username: String, password: String, authCode: String): String? {
+suspend fun getTokenOld(apiName: String, username: String, password: String, authCode: String): String? {
     val authRequest = ApiCall()
     var authData: AuthResponse?
 
@@ -356,6 +356,43 @@ suspend fun getToken(apiName: String, username: String, password: String, authCo
     }
 
     return authData?.data?.token
+}
+
+suspend fun getToken(apiName: String, username: String, password: String, authCode: String): String? {
+    val authRequest = ApiCall()
+    val authData: AuthResponse?
+
+    try {
+        authData = coroutineScope {
+            async {
+                authRequest.getToken(
+                    apiName,
+                    username,
+                    password,
+                    authCode
+                )
+            }
+        }.await()
+    } catch (e: Exception) {
+        Log.e("getToken", "Error getting token: $e")
+        return null
+    }
+
+    Log.e("getToken", "data: $authData")
+
+    if (authData == null) {
+        Log.e("getToken", "Auth Data is null")
+        return null
+    }
+
+    if (authRequest.errorMessage.isEmpty()) {
+        Log.d("AuthData", authData.toString())
+        Log.d("TokenData", authData.data.token)
+    } else {
+        Log.e("TokenDataError", authRequest.errorMessage)
+    }
+
+    return authData.data.token
 }
 
 /*@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)
