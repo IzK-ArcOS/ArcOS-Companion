@@ -1,6 +1,5 @@
 package com.blockyheadman.arcoscompanion
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -23,8 +22,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,15 +49,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
 import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
 import com.blockyheadman.arcoscompanion.data.UserPreferences
+import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
 import com.blockyheadman.arcoscompanion.data.navBarItems
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
-import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.ui.HomePage
 import com.blockyheadman.arcoscompanion.ui.MessagesPage
 import com.blockyheadman.arcoscompanion.ui.ServersPage
@@ -135,8 +131,6 @@ fun CompanionApp() {
     val store = UserPreferences(context)
 
     val systemDarkTheme = isSystemInDarkTheme()
-    //val dynamicColor by remember { Settings.dynamicColor }
-    //val darkThemeEnabled by remember { Settings.darkThemeEnabled }
     val dynamicColor = store.getMaterialYouMode.collectAsState(initial = false)
     val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
     val darkTheme = when (darkThemeEnabled.value) {
@@ -241,7 +235,7 @@ fun CompanionApp() {
                                     )
                                 },
                                 icon = {
-                                    if (index == 2 && ContextCompat.checkSelfPermission(
+                                    /*if (index == 2 && ContextCompat.checkSelfPermission(
                                             context,
                                             Manifest.permission.POST_NOTIFICATIONS
                                         ) == 0
@@ -278,6 +272,17 @@ fun CompanionApp() {
                                                 contentDescription = null
                                             )
                                         }
+                                    }*/
+                                    if (selectedNavBarItem == index) {
+                                        Icon(
+                                            imageVector = item.iconFilled,
+                                            contentDescription = null
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = item.iconOutlined,
+                                            contentDescription = null
+                                        )
                                     }
                                 },
                                 label = { Text(item.name) }
@@ -333,32 +338,12 @@ fun CompanionApp() {
     }
 }
 
-suspend fun getTokenOld(apiName: String, username: String, password: String, authCode: String): String? {
-    val authRequest = ApiCall()
-    var authData: AuthResponse?
-
-    coroutineScope {
-        authData = async {
-            authRequest.getToken(
-                apiName,
-                username,
-                password,
-                authCode
-            )
-        }.await()
-        authData?.data?.let { Log.d("token", it.token) }
-        if (authRequest.errorMessage.isEmpty()) {
-            Log.d("AuthData", authData.toString())
-            authData?.data?.token?.let { Log.d("TokenData", it) }
-        } else {
-            Log.e("TokenDataError", authRequest.errorMessage)
-        }
-    }
-
-    return authData?.data?.token
-}
-
-suspend fun getAuthToken(apiName: String, username: String, password: String, authCode: String): String? {
+suspend fun getAuthToken(
+    apiName: String,
+    username: String,
+    password: String,
+    authCode: String
+): String? {
     val authRequest = ApiCall()
     val authData: AuthResponse?
 
@@ -395,15 +380,3 @@ suspend fun getAuthToken(apiName: String, username: String, password: String, au
 
     return authData.data.token
 }
-
-/*@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES, wallpaper = 1)
-@Composable
-fun DarkGreetingPreview() {
-    CompanionApp()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LightGreetingPreview() {
-    CompanionApp()
-}*/

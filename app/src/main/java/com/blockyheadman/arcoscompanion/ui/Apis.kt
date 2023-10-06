@@ -74,10 +74,11 @@ import com.blockyheadman.arcoscompanion.apis
 import com.blockyheadman.arcoscompanion.connectivityManager
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
+import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
-import com.blockyheadman.arcoscompanion.data.network.AuthResponse
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -136,9 +137,7 @@ fun ServersPage(externalPadding: PaddingValues) {
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = {
                 vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-                //showNewAPIDialog.value = true
                 showAddAPI.value = true
-                //privateAPIDialog.value = serverTypeTabIndex == 1
             }) {
                 Text(
                     when (apiTabIndex) {
@@ -152,8 +151,6 @@ fun ServersPage(externalPadding: PaddingValues) {
     ) { innerPadding ->
 
         //val mainContext = LocalContext.current
-
-        //apis by rememberSaveable { mutableStateOf(emptyList<ApiSaveData>()) } //: List<ApiSaveData>
 
         Box(
             modifier = Modifier
@@ -210,20 +207,23 @@ fun ServersPage(externalPadding: PaddingValues) {
             }
         }
         if (showAddAPI.value) {
-            //var connectionAvailable by rememberSaveable { mutableStateOf(true) }
             LaunchedEffect(connectionAvailable) {
                 coroutineScope {
                     connectivityManager.registerDefaultNetworkCallback(object :
                         ConnectivityManager.NetworkCallback() {
                         override fun onAvailable(network: Network) {
-                            Log.e("ConnectionManager", "The default network is now: $network")
+                            Log.e(
+                                "ConnectionManager",
+                                "The default network is now: $network"
+                            )
                             connectionAvailable = true
                         }
 
                         override fun onLost(network: Network) {
                             Log.e(
                                 "ConnectionManager",
-                                "The application no longer has a default network. The last default network was $network"
+                                "The application no longer has a default network. " +
+                                        "The last default network was $network"
                             )
                             connectionAvailable = false
                         }
@@ -259,9 +259,8 @@ fun ServersPage(externalPadding: PaddingValues) {
     }
 }
 
-//@Preview
 @Composable
-fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for private apis
+fun ApiCard(data: ApiSaveData) {
     var settingsExpanded by rememberSaveable { mutableStateOf(false) }
 
     Card(
@@ -359,8 +358,6 @@ fun ApiCard(data: ApiSaveData) { //data: ApiSaveData add `private: Boolean` for 
                     fontSize = 24.sp
                 )
             }
-            /*Text(data.password)
-            if (private) data.authCode?.let { Text(it) }*/
         }
 
     }
@@ -514,22 +511,45 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                         Text("Cancel")
                     }
                     Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            Log.d("AddAPIOKButton", "OK Clicked")
-                            focusManager.clearFocus()
-                            buttonClicked = true
+                    if (privateAPIDialog.value) {
+                        Button(
+                            onClick = {
+                                Log.d("AddAPIOKButton", "OK Clicked")
+                                focusManager.clearFocus()
+                                buttonClicked = true
 
-                            //showNewAPIDialog = false
-                            vibrator.vibrate(
-                                VibrationEffect.createPredefined(
-                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
                                 )
-                            )
-                        },
-                        enabled = apiInput.isNotEmpty() && usernameInput.isNotEmpty() && passwordInput.isNotEmpty()
-                    ) {
-                        Text("OK")
+                            },
+                            enabled = apiInput.isNotEmpty()
+                                    && usernameInput.isNotEmpty()
+                                    && passwordInput.isNotEmpty()
+                                    && authCodeInput.isNotEmpty()
+                        ) {
+                            Text("OK")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                Log.d("AddAPIOKButton", "OK Clicked")
+                                focusManager.clearFocus()
+                                buttonClicked = true
+
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
+                            },
+                            enabled = apiInput.isNotEmpty()
+                                    && usernameInput.isNotEmpty()
+                                    && passwordInput.isNotEmpty()
+                        ) {
+                            Text("OK")
+                        }
                     }
                 }
 
@@ -539,17 +559,17 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
 
                     LaunchedEffect(authRequest) {
                         coroutineScope {
-                            authData = authRequest.getToken(
-                                apiInput,
-                                usernameInput,
-                                passwordInput,
-                                authCodeInput
-                            )
+                            authData = async(Dispatchers.IO) {
+                                authRequest.getToken(
+                                    apiInput,
+                                    usernameInput,
+                                    passwordInput,
+                                    authCodeInput
+                                )
+                            }.await()
                         }
                         if (authRequest.errorMessage.isEmpty()) {
-                            Log.d("AuthRequestDebug", "Error message is empty!")
                             if (!authData?.data?.token.isNullOrBlank()) {
-                                Log.d("AuthRequestDebug", "Token is not null!")
                                 coroutineScope {
                                     apiDao.insert(
                                         ApiSaveData(
@@ -559,6 +579,13 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                             authCodeInput
                                         )
                                     )
+                                    authData?.data?.token?.let {
+                                        ApiCall().deAuthToken(
+                                            apiInput,
+                                            authCodeInput,
+                                            it
+                                        )
+                                    }
                                 }
                                 // token success
                                 Toast.makeText(
@@ -575,6 +602,13 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                         } else {
                             // error handling
                             Log.d("AddAPIAuth", authRequest.errorMessage)
+
+                            if (authRequest.errorMessage.startsWith("Failed to connect to")) {
+                                Toast.makeText(
+                                    mainContext, "Unable to connect to: $apiInput",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
 
                             if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
                                 if (connectionAvailable) {
@@ -647,7 +681,6 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                //.height(if (privateAPIDialog.value) 300.dp else 210.dp)
                 .height(if (privateAPIDialog.value) 410.dp else 340.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
@@ -761,22 +794,41 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                         Text("Cancel")
                     }
                     Spacer(Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            Log.d("EditAPIOKButton", "OK Clicked")
-                            focusManager.clearFocus()
-                            buttonClicked = true
+                    if (privateAPIDialog.value) {
+                        Button(
+                            onClick = {
+                                Log.d("EditAPIOKButton", "OK Clicked")
+                                focusManager.clearFocus()
+                                buttonClicked = true
 
-                            //showNewAPIDialog = false
-                            vibrator.vibrate(
-                                VibrationEffect.createPredefined(
-                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
                                 )
-                            )
-                        },
-                        enabled = passwordInput.isNotEmpty()
-                    ) {
-                        Text("OK")
+                            },
+                            enabled = passwordInput.isNotEmpty()
+                                    && authCodeInput.isNotEmpty()
+                        ) {
+                            Text("OK")
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                Log.d("EditAPIOKButton", "OK Clicked")
+                                focusManager.clearFocus()
+                                buttonClicked = true
+
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
+                            },
+                            enabled = passwordInput.isNotEmpty()
+                        ) {
+                            Text("OK")
+                        }
                     }
                 }
 
@@ -786,31 +838,39 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
 
                     LaunchedEffect(authRequest) {
                         coroutineScope {
-                            authData = authRequest.getToken(
-                                apiName,
-                                username,
-                                passwordInput,
-                                authCodeInput
-                            )
+                            authData = async(Dispatchers.IO) {
+                                authRequest.getToken(
+                                    apiName,
+                                    username,
+                                    passwordInput,
+                                    authCodeInput
+                                )
+                            }.await()
                         }
                         if (authRequest.errorMessage.isEmpty()) {
                             authData?.data?.token?.let { Log.d("AuthRequest", it) }
-                            if (authData?.data?.token.isNullOrBlank()) {
+                            if (!authData?.data?.token.isNullOrBlank()) {
                                 coroutineScope {
                                     apiDao.update(
                                         ApiSaveData(
                                             api.name,
                                             api.username,
                                             passwordInput,
-                                            authCodeInput,
-                                            //authData?.data?.token
+                                            authCodeInput
                                         )
                                     )
+                                    authData?.data?.token?.let {
+                                        ApiCall().deAuthToken(
+                                            apiName,
+                                            authCodeInput,
+                                            it
+                                        )
+                                    }
                                 }
                                 // token success
                                 Toast.makeText(
                                     editApiContext,
-                                    "API Added Successfully!",
+                                    "API Edited Successfully!",
                                     Toast.LENGTH_SHORT
                                 ).show()
 
@@ -822,6 +882,13 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                         } else {
                             // error handling
                             Log.d("EditAPIAuth", authRequest.errorMessage)
+
+                            if (authRequest.errorMessage.startsWith("Failed to connect to")) {
+                                Toast.makeText(
+                                    mainContext, "Unable to connect to: $apiName",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
 
                             if (authRequest.errorMessage.startsWith("Unable to resolve host")) {
                                 if (connectionAvailable) {

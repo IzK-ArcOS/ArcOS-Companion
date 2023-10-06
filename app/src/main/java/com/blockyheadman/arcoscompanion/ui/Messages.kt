@@ -10,7 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,26 +27,23 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,9 +67,8 @@ import androidx.core.content.ContextCompat
 import com.blockyheadman.arcoscompanion.NotificationIDs
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.apis
-import com.blockyheadman.arcoscompanion.data.MessageData
-import com.blockyheadman.arcoscompanion.data.MessageList
-import com.blockyheadman.arcoscompanion.data.navBarItems
+import com.blockyheadman.arcoscompanion.data.classes.MessageData
+import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
 import com.blockyheadman.arcoscompanion.getAuthToken
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
@@ -124,7 +120,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
             Column (
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ScrollableTabRow(selectedTabIndex = apiTabIndex, tabs = {
+                ScrollableTabRow(selectedTabIndex = apiTabIndex,
+                    divider = {
+                        HorizontalDivider(Modifier.fillMaxWidth())
+                    },
+                    tabs = {
                     apis.forEach { api ->
                         Tab(
                             selected = apiTabIndex == apis.indexOf(api),
@@ -161,7 +161,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                         apis[apiTabIndex].authCode,
                                         token
                                     )
-
+                                    ApiCall().deAuthToken(
+                                        apis[apiTabIndex].name,
+                                        apis[apiTabIndex].authCode,
+                                        token
+                                    )
                                 }
                             },
                             modifier = Modifier.padding(horizontal = 4.dp)
@@ -269,6 +273,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                         apis[apiTabIndex].authCode,
                                         token
                                     )
+                                    ApiCall().deAuthToken(
+                                        apis[apiTabIndex].name,
+                                        apis[apiTabIndex].authCode,
+                                        token
+                                    )
 
                                 }
                             }
@@ -285,8 +294,6 @@ fun MessagesPage(externalPadding: PaddingValues) {
         }
         //contentAlignment = Alignment.Center
     ) { innerPadding ->
-        //Text("There's not much to see here..")
-
         //val mainContext = LocalContext.current
 
         LaunchedEffect(Unit) {
@@ -318,6 +325,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         apis[apiTabIndex].authCode,
                         token
                     )
+                    ApiCall().deAuthToken(
+                        apis[apiTabIndex].name,
+                        apis[apiTabIndex].authCode,
+                        token
+                    )
 
                 }
             }
@@ -334,9 +346,38 @@ fun MessagesPage(externalPadding: PaddingValues) {
         LazyColumn (
             Modifier.padding(innerPadding)//.padding(top = 52.dp)
         ) {
-            messageData?.data?.let { list ->
-                items(list.size) {
-                    MessageCard(messageData!!.data[it])
+            if (messageData != null) {
+                if (messageData!!.data.isEmpty()) {
+                    item {
+                        Box (
+                            Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Lonely mailbox you got there..",
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    messageData?.data?.let { list ->
+                        items(list.size) {
+                            MessageCard(messageData!!.data[it])
+                        }
+                    }
+                }
+                Log.d("MessageData", messageData.toString())
+            }else {
+                item {
+                    Box (
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Loading your inbox..",
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
@@ -392,6 +433,7 @@ fun MessageCard(messageInfo: MessageData) {
                         onDismissRequest = { settingsExpanded = false }
                     ) {
 
+                        // TODO add "View Full Message", delete, new message, and reply functionality
                         DropdownMenuItem(text = { Text("Reply") },
                             onClick = {
                                 Toast.makeText(
@@ -412,17 +454,25 @@ fun MessageCard(messageInfo: MessageData) {
                 }
             }
             Spacer(Modifier.height(4.dp))
-            Text(
-                "Title: " +
-                bodyContents[0].removePrefix("### "),
-                fontWeight = FontWeight.W600,
-                fontSize = 20.sp
-            )
-            Text(
-                bodyContents[1],
-                fontWeight = FontWeight.W400,
-                fontSize = 16.sp
-            )
+            if (bodyContents.size == 2) {
+                Text(
+                    "Title: " +
+                            bodyContents[0].removePrefix("### "),
+                    fontWeight = FontWeight.W600,
+                    fontSize = 20.sp
+                )
+                Text(
+                    bodyContents[1],
+                    fontWeight = FontWeight.W400,
+                    fontSize = 16.sp
+                )
+            } else {
+                Text(
+                    bodyContents[0],
+                    fontWeight = FontWeight.W400,
+                    fontSize = 16.sp
+                )
+            }
         }
     }
 }
@@ -470,73 +520,15 @@ suspend fun getMessages(apiName: String, authCode: String, authToken: String): M
     return messageData
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun MessagesPreview() {
-    ArcOSCompanionTheme(darkTheme = true, dynamicColor = false) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Messages")
-                            }
-                        },
-                        navigationIcon = {
-                            Image(
-                                painter = painterResource(id = R.drawable.arcos_logo),
-                                contentDescription = "ArcOS logo",
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-
-                    )
-                },
-                bottomBar = {
-                    BottomAppBar {
-                        navBarItems.forEachIndexed { index, item ->
-                            NavigationBarItem(
-                                selected = index == 2,
-                                onClick = {},
-                                icon = {
-                                    if (index == 2) {
-                                        Icon(
-                                            imageVector = item.iconFilled,
-                                            contentDescription = null
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = item.iconOutlined,
-                                            contentDescription = null
-                                        )
-                                    }
-                                },
-                                label = { Text(item.name) }
-                            )
-                        }
-                    }
-                }
-            ) { innerPadding ->
-                MessagesPage(innerPadding)
-            }
-        }
-    }
-}
-
 @Preview
 @Composable
 fun MessageCardPreview() {
     val messageInfo = MessageData(
         "Blocky",
         "Izaak Kuipers",
-        "### This is a pretty long title for testing things\nThis is a test body for a message card that's pretty long and should wrap at least a line or two depending on if this is a huge message.",
+        "### This is a pretty long title for testing things\n" +
+                "This is a test body for a message card that's pretty long and should wrap at " +
+                "least a line or two depending on if this is a huge message.",
         1234567890123,
         null,
         123456789,

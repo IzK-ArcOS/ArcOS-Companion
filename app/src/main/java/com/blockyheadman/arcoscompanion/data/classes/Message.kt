@@ -1,4 +1,4 @@
-package com.blockyheadman.arcoscompanion.data
+package com.blockyheadman.arcoscompanion.data.classes
 
 import com.google.gson.annotations.SerializedName
 

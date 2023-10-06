@@ -55,14 +55,18 @@ fun SettingsPage(externalPadding: PaddingValues) {
     val store = UserPreferences(context)
 
     var showThemeDialog by remember { mutableStateOf(false) }
-    //var dynamicColor by remember { Settings.dynamicColor }
-    //var darkThemeEnabled by remember { Settings.darkThemeEnabled }
-    val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
     val dynamicColor = store.getMaterialYouMode.collectAsState(initial = false)
+    val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
 
     Column (
-        modifier = Modifier.padding(externalPadding)
+        modifier = Modifier.padding(externalPadding),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Text(
+            text = "Demo Version | v1.0.0.DEMO",
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(4.dp))
         Row (
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -70,33 +74,30 @@ fun SettingsPage(externalPadding: PaddingValues) {
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 Switch(checked = dynamicColor.value, onCheckedChange = {
-                    //dynamicColor = !dynamicColor
                     CoroutineScope(Dispatchers.IO).launch {
                         store.saveMaterialYouMode(!dynamicColor.value)
                     }
-                    vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+                    vibrator.vibrate(
+                        VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                    )
                 })
                 Spacer(Modifier.size(5.dp))
                 Text("Enable Dynamic Color")
             }
         }
-        Row (
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(onClick = {
-                showThemeDialog = !showThemeDialog
-                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-            }) {
-                Text("Change Theme")
-            }
+
+        Button(onClick = {
+            showThemeDialog = !showThemeDialog
+            vibrator.vibrate(
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+            )
+        }) {
+            Text("Change Theme")
         }
 
         Spacer(Modifier.height(8.dp))
         Text(
             text = "Developer Stuffs",
-            modifier = Modifier.fillMaxWidth(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -106,42 +107,33 @@ fun SettingsPage(externalPadding: PaddingValues) {
             color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(Modifier.height(4.dp))
-        Row (
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(onClick = {
-                val db = ContextCompat.getDrawable(context, R.drawable.bg)
-                val bit = Bitmap.createBitmap(
-                    db!!.intrinsicWidth,
-                    db.intrinsicHeight,
-                    Bitmap.Config.ARGB_8888
+        Button(onClick = {
+            val db = ContextCompat.getDrawable(context, R.drawable.bg)
+            val bit = Bitmap.createBitmap(
+                db!!.intrinsicWidth,
+                db.intrinsicHeight,
+                Bitmap.Config.ARGB_8888
+            )
+
+            val notification = NotificationCompat.Builder(context, "ArcMailIncoming")
+                .setSmallIcon(R.drawable.arcos_logo)
+                .setContentTitle("Izaak Kuipers")
+                .setContentText("1 new message")
+                .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)
+                .setLargeIcon(bit)
+                .setStyle(
+                    NotificationCompat.InboxStyle()
+                        .setBigContentTitle("Test Message")
+                        .setSummaryText("ArcMail")
+                        .addLine("This is a test message for ArcMail notifications")
                 )
-                //val canvas = Canvas(bit)
-                //db.setBounds(0, 0, canvas.width, canvas.height)
-                //db.draw(canvas)
 
-                val notification = NotificationCompat.Builder(context, "ArcMailIncoming")
-                    .setSmallIcon(R.drawable.arcos_logo)
-                    .setContentTitle("Izaak Kuipers")
-                    .setContentText("1 new message")
-                    .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)
-                    .setLargeIcon(bit)
-                    .setStyle(
-                        NotificationCompat.InboxStyle()
-                            .setBigContentTitle("Test Message")
-                            .setSummaryText("ArcMail")
-                            .addLine("This is a test message for ArcMail notifications")
-                    )
-
-                notificationManager.notify(NotificationIDs.NOTIFICATION_ID, notification.build())
-            }) {
-                Text("Test ArcMail Notification")
-            }
+            notificationManager.notify(NotificationIDs.NOTIFICATION_ID, notification.build())
+        }) {
+            Text("Test ArcMail Notification")
         }
-
     }
+
     if (showThemeDialog) {
         Dialog(onDismissRequest = { showThemeDialog = false }) {
             Card(
@@ -174,11 +166,12 @@ fun SettingsPage(externalPadding: PaddingValues) {
                         RadioButton(
                             selected = darkThemeEnabled.value == 0,
                             onClick = {
-                                //darkThemeEnabled = 0
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(0)
                                 }
-                                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                )
                             })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -186,11 +179,12 @@ fun SettingsPage(externalPadding: PaddingValues) {
                         RadioButton(
                             selected = darkThemeEnabled.value == 1,
                             onClick = {
-                                //darkThemeEnabled = 1
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(1)
                                 }
-                                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                )
                             })
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -198,16 +192,19 @@ fun SettingsPage(externalPadding: PaddingValues) {
                         RadioButton(
                             selected = darkThemeEnabled.value == 2,
                             onClick = {
-                                //darkThemeEnabled = 2
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(2)
                                 }
-                                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                                )
                             })
                     }
                     Button(onClick = {
                         showThemeDialog = false
-                        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
+                        vibrator.vibrate(
+                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                        )
                     }) {
                         Text("OK")
                     }

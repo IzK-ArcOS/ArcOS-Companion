@@ -19,16 +19,8 @@ data class ApiSaveData constructor(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "username") val username: String,
     @ColumnInfo(name = "password") val password: String,
-    @ColumnInfo(name = "auth_code") val authCode: String,
-    //@Ignore var token: String
-)/* {
-    constructor(
-        name: String,
-        username: String,
-        password: String,
-        authCode: String,
-    ) : this(name, username, password, authCode, "")
-}*/
+    @ColumnInfo(name = "auth_code") val authCode: String
+)
 
 // Database Access Object for interacting with the api list database
 @Dao
