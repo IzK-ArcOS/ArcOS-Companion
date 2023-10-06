@@ -44,8 +44,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -89,7 +89,6 @@ import kotlinx.coroutines.runBlocking
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesPage(externalPadding: PaddingValues) {
-
     val context = LocalContext.current
     var permissionGranted by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
@@ -127,16 +126,17 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ScrollableTabRow(selectedTabIndex = apiTabIndex,
+                    PrimaryScrollableTabRow(selectedTabIndex = apiTabIndex,
                         divider = {
                             HorizontalDivider(Modifier.fillMaxWidth())
                         },
                         tabs = {
-                            apis.forEach { api ->
+                            val apisSorted = apis.sortedBy { it.username }
+                            apisSorted.forEach { api ->
                                 Tab(
-                                    selected = apiTabIndex == apis.indexOf(api),
+                                    selected = apiTabIndex == apisSorted.indexOf(api),
                                     onClick = {
-                                        apiTabIndex = apis.indexOf(api)
+                                        apiTabIndex = apisSorted.indexOf(api)
                                         val scope = CoroutineScope(Job())
                                         scope.launch {
                                             // TODO Make this a function
@@ -145,10 +145,10 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                                             val token: String? = async {
                                                 getAuthToken(
-                                                    apis[apiTabIndex].name,
-                                                    apis[apiTabIndex].username,
-                                                    apis[apiTabIndex].password,
-                                                    apis[apiTabIndex].authCode
+                                                    apisSorted[apiTabIndex].name,
+                                                    apisSorted[apiTabIndex].username,
+                                                    apisSorted[apiTabIndex].password,
+                                                    apisSorted[apiTabIndex].authCode
                                                 )
                                             }.await()
 
@@ -163,17 +163,17 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                                             Log.d(
                                                 "GET MESSAGES",
-                                                "Api name: ${apis[apiTabIndex].name}"
+                                                "Api name: ${apisSorted[apiTabIndex].name}"
                                             )
                                             Log.d("GET MESSAGES", "Token: $token")
                                             messageData = getMessages(
-                                                apis[apiTabIndex].name,
-                                                apis[apiTabIndex].authCode,
+                                                apisSorted[apiTabIndex].name,
+                                                apisSorted[apiTabIndex].authCode,
                                                 token
                                             )
                                             ApiCall().deAuthToken(
-                                                apis[apiTabIndex].name,
-                                                apis[apiTabIndex].authCode,
+                                                apisSorted[apiTabIndex].name,
+                                                apisSorted[apiTabIndex].authCode,
                                                 token
                                             )
                                         }

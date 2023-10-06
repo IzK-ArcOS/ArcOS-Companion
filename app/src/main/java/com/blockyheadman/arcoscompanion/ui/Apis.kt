@@ -43,9 +43,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.PopupProperties
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.apiDao
 import com.blockyheadman.arcoscompanion.apis
@@ -95,7 +96,6 @@ lateinit var editApi: ApiSaveData
 
 @Composable
 fun ServersPage(externalPadding: PaddingValues) {
-
     privateAPIDialog = rememberSaveable { mutableStateOf(false) }
     showAddAPI = rememberSaveable { mutableStateOf(false) }
     showEditAPI = rememberSaveable { mutableStateOf(false) }
@@ -106,7 +106,7 @@ fun ServersPage(externalPadding: PaddingValues) {
         modifier = Modifier
             .padding(externalPadding),
         topBar = {
-            TabRow(
+            PrimaryTabRow(
                 selectedTabIndex = apiTabIndex,
                 divider = {
                     HorizontalDivider(
@@ -180,12 +180,13 @@ fun ServersPage(externalPadding: PaddingValues) {
             }
 
             LazyColumn {
+                val apisSorted = apis.sortedBy { it.username }
                 when (apiTabIndex) {
                     0 -> {
-                        items(apis.size) {
-                            if (apis[it].authCode.isBlank()) ApiCard(apis[it])
+                        apisSorted.forEach { api ->
+                            if (api.authCode.isBlank()) item { ApiCard(api) }
                         }
-                        if (apis.isEmpty()) item {
+                        if (apisSorted.isEmpty()) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -196,10 +197,10 @@ fun ServersPage(externalPadding: PaddingValues) {
                     }
 
                     1 -> {
-                        items(apis.size) {
-                            if (apis[it].authCode.isNotBlank()) ApiCard(apis[it])
+                        apisSorted.forEach { api ->
+                            if (api.authCode.isNotBlank()) item { ApiCard(api) }
                         }
-                        if (apis.isEmpty()) item {
+                        if (apisSorted.isEmpty()) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -317,7 +318,11 @@ fun ApiCard(data: ApiSaveData) {
 
                     DropdownMenu(
                         expanded = settingsExpanded,
-                        onDismissRequest = { settingsExpanded = false }
+                        onDismissRequest = { settingsExpanded = false },
+                        properties = PopupProperties(
+                            dismissOnBackPress = true,
+                            dismissOnClickOutside = true
+                        )
                     ) {
 
                         DropdownMenuItem(text = { Text("Edit") },
