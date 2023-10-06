@@ -123,11 +123,10 @@ fun MessagesPage(externalPadding: PaddingValues) {
             .padding(externalPadding)
             .fillMaxSize(),
         topBar = {
-            if (apis.isNotEmpty())
-            Column (
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (apis.isEmpty()) {
+            if (apis.isNotEmpty()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     ScrollableTabRow(selectedTabIndex = apiTabIndex,
                         divider = {
                             HorizontalDivider(Modifier.fillMaxWidth())
