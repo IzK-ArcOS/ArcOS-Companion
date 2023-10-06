@@ -10,6 +10,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -362,12 +368,26 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 } else {
                     messageData?.data?.let { list ->
                         items(list.size) {
-                            MessageCard(messageData!!.data[it])
+                            AnimatedVisibility(
+                                visibleState = MutableTransitionState(
+                                    initialState = false
+                                ).apply { targetState = true },
+                                modifier = Modifier,
+                                enter = slideInVertically (
+                                    initialOffsetY = { 120 }
+                                ) + fadeIn(
+                                    initialAlpha = 0f
+                                ),
+                                exit = slideOutVertically() + fadeOut(),
+                            ) {
+                                MessageCard(messageData!!.data[it])
+                            }
+
                         }
                     }
                 }
                 Log.d("MessageData", messageData.toString())
-            }else {
+            } else {
                 item {
                     Box (
                         Modifier.fillMaxSize(),

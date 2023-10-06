@@ -7,6 +7,9 @@ import android.net.NetworkCapabilities
 import android.os.VibrationEffect
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -135,15 +138,31 @@ fun ServersPage(externalPadding: PaddingValues) {
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = {
-                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK))
-                showAddAPI.value = true
-            }) {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    vibrator.vibrate(
+                        VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                    )
+                    showAddAPI.value = true
+                },
+                /*Modifier.animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = LinearOutSlowInEasing
+                    )
+                )*/
+            ) {
                 Text(
                     when (apiTabIndex) {
-                        0 -> "New API"
-                        else -> "New Private API"
-                    }
+                        0 -> "New API "
+                        else -> "New Private API "
+                    },
+                    Modifier.animateContentSize(
+                        animationSpec = tween(
+                            durationMillis = 300,
+                            easing = LinearOutSlowInEasing
+                        )
+                    )
                 )
                 Icon(Icons.Default.Add, null)
             }
