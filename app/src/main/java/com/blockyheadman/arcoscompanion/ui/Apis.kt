@@ -144,13 +144,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                     )
                     showAddAPI.value = true
-                },
-                /*Modifier.animateContentSize(
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = LinearOutSlowInEasing
-                    )
-                )*/
+                }
             ) {
                 Text(
                     when (apiTabIndex) {
@@ -189,7 +183,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                 when (apiTabIndex) {
                     0 -> {
                         items(apis.size) {
-                            if (apis[it].authCode.isBlank()) ApiCard(apis[it]) // private = false
+                            if (apis[it].authCode.isBlank()) ApiCard(apis[it])
                         }
                         if (apis.isEmpty()) item {
                             Box(
@@ -203,7 +197,7 @@ fun ServersPage(externalPadding: PaddingValues) {
 
                     1 -> {
                         items(apis.size) {
-                            if (apis[it].authCode.isNotBlank()) ApiCard(apis[it]) // private = true
+                            if (apis[it].authCode.isNotBlank()) ApiCard(apis[it])
                         }
                         if (apis.isEmpty()) item {
                             Box(
