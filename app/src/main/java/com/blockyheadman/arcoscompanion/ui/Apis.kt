@@ -191,12 +191,19 @@ fun ServersPage(externalPadding: PaddingValues) {
 
             LazyColumn {
                 val apisSorted = apis.sortedBy { it.username }
+
+                var publicApiCount = 0
+                var privateApiCount = 0
+
                 when (apiTabIndex) {
                     0 -> {
                         apisSorted.forEach { api ->
-                            if (api.authCode.isBlank()) item { ApiCard(api) }
+                            if (api.authCode.isBlank()) {
+                                item { ApiCard(api) }
+                                publicApiCount++
+                            }
                         }
-                        if (apisSorted.isEmpty()) item {
+                        if (publicApiCount == 0) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
@@ -208,9 +215,12 @@ fun ServersPage(externalPadding: PaddingValues) {
 
                     1 -> {
                         apisSorted.forEach { api ->
-                            if (api.authCode.isNotBlank()) item { ApiCard(api) }
+                            if (api.authCode.isNotBlank()) {
+                                item { ApiCard(api) }
+                                privateApiCount++
+                            }
                         }
-                        if (apisSorted.isEmpty()) item {
+                        if (privateApiCount == 0) item {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
