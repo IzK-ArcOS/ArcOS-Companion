@@ -104,8 +104,7 @@ fun ServersPage(externalPadding: PaddingValues) {
     var apiTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
-        modifier = Modifier
-            .padding(externalPadding),
+        modifier = Modifier.padding(externalPadding),
         topBar = {
             PrimaryTabRow(
                 selectedTabIndex = apiTabIndex,
