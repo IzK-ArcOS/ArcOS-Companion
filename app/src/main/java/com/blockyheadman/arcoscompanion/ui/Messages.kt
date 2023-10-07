@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.VibrationEffect
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -78,6 +80,7 @@ import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
 import com.blockyheadman.arcoscompanion.getAuthToken
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
+import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -117,25 +120,33 @@ fun MessagesPage(externalPadding: PaddingValues) {
         else -> false
     }
 
+    val apisSorted = apis.sortedBy { it.username }
+
     Scaffold (
         modifier = Modifier
             .padding(externalPadding)
             .fillMaxSize(),
         topBar = {
-            if (apis.isNotEmpty()) {
+            if (apis.size > 1) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    PrimaryScrollableTabRow(selectedTabIndex = apiTabIndex,
+                    PrimaryScrollableTabRow(
+                        selectedTabIndex = apiTabIndex,
                         divider = {
                             HorizontalDivider(Modifier.fillMaxWidth())
                         },
                         tabs = {
-                            val apisSorted = apis.sortedBy { it.username }
                             apisSorted.forEach { api ->
                                 Tab(
                                     selected = apiTabIndex == apisSorted.indexOf(api),
                                     onClick = {
+                                        vibrator.vibrate(
+                                            VibrationEffect.createPredefined(
+                                                VibrationEffect.EFFECT_DOUBLE_CLICK
+                                            )
+                                        )
+
                                         apiTabIndex = apisSorted.indexOf(api)
                                         val scope = CoroutineScope(Job())
                                         scope.launch {
@@ -202,6 +213,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         ) {
                             ElevatedButton(
                                 onClick = {
+                                    vibrator.vibrate(
+                                        VibrationEffect.createPredefined(
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        )
+                                    )
                                     when (PackageManager.PERMISSION_GRANTED) {
                                         ContextCompat.checkSelfPermission(
                                             context,
@@ -244,6 +260,10 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         ) {
                             ElevatedButton(
                                 onClick = {
+                                    vibrator.vibrate(
+                                        VibrationEffect.createPredefined(
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK)
+                                    )
                                     Log.d(
                                         "GET MESSAGES",
                                         "Api name: ${apis[apiTabIndex].name}"
@@ -261,10 +281,10 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                                         val token: String? = async {
                                             getAuthToken(
-                                                apis[apiTabIndex].name,
-                                                apis[apiTabIndex].username,
-                                                apis[apiTabIndex].password,
-                                                apis[apiTabIndex].authCode
+                                                apisSorted[apiTabIndex].name,
+                                                apisSorted[apiTabIndex].username,
+                                                apisSorted[apiTabIndex].password,
+                                                apisSorted[apiTabIndex].authCode
                                             )
                                         }.await()
 
@@ -280,13 +300,13 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                         )
                                         Log.d("GET MESSAGES", "Token: $token")
                                         messageData = getMessages(
-                                            apis[apiTabIndex].name,
-                                            apis[apiTabIndex].authCode,
+                                            apisSorted[apiTabIndex].name,
+                                            apisSorted[apiTabIndex].authCode,
                                             token
                                         )
                                         ApiCall().deAuthToken(
-                                            apis[apiTabIndex].name,
-                                            apis[apiTabIndex].authCode,
+                                            apisSorted[apiTabIndex].name,
+                                            apisSorted[apiTabIndex].authCode,
                                             token
                                         )
 
@@ -319,10 +339,10 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                         val token: String? = async {
                             getAuthToken(
-                                apis[apiTabIndex].name,
-                                apis[apiTabIndex].username,
-                                apis[apiTabIndex].password,
-                                apis[apiTabIndex].authCode
+                                apisSorted[apiTabIndex].name,
+                                apisSorted[apiTabIndex].username,
+                                apisSorted[apiTabIndex].password,
+                                apisSorted[apiTabIndex].authCode
                             )
                         }.await()
 
@@ -335,13 +355,13 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
                         Log.d("GET MESSAGES", "Token: $token")
                         messageData = getMessages(
-                            apis[apiTabIndex].name,
-                            apis[apiTabIndex].authCode,
+                            apisSorted[apiTabIndex].name,
+                            apisSorted[apiTabIndex].authCode,
                             token
                         )
                         ApiCall().deAuthToken(
-                            apis[apiTabIndex].name,
-                            apis[apiTabIndex].authCode,
+                            apisSorted[apiTabIndex].name,
+                            apisSorted[apiTabIndex].authCode,
                             token
                         )
                     }
@@ -418,9 +438,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
 @Composable
 fun MessageCard(messageInfo: MessageData) {
     val context = LocalContext.current
-
     var settingsExpanded by rememberSaveable { mutableStateOf(false) }
-
     val bodyContents = messageInfo.partialBody.split("\n", limit = 2)
 
     Card(
@@ -450,7 +468,12 @@ fun MessageCard(messageInfo: MessageData) {
                     )
                 }
                 IconButton(
-                    onClick = { settingsExpanded = true }
+                    onClick = {
+                        vibrator.vibrate(
+                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                        )
+                        settingsExpanded = true
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
@@ -463,8 +486,37 @@ fun MessageCard(messageInfo: MessageData) {
                     ) {
 
                         // TODO add "View Full Message", delete, new message, and reply functionality
+                        DropdownMenuItem(text = { Text("View Full") },
+                            onClick = {
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
+
+                                // TODO View full message
+                                Toast.makeText(
+                                    context,
+                                    "Feature not yet available",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                settingsExpanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Outlined.Info,
+                                    contentDescription = "View Full Message"
+                                )
+                            }
+                        )
+
                         DropdownMenuItem(text = { Text("Reply") },
                             onClick = {
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
                                 Toast.makeText(
                                     context,
                                     "Feature not yet available",

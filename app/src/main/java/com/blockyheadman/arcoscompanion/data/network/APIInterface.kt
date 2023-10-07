@@ -21,6 +21,13 @@ interface APIService {
         @Query("ac") authCode: String
     ): MessageList
 
+    @GET("messages/get")
+    suspend fun getFullMessage(
+        @Header("authorization") auth: String,
+        @Query("id") id: String,
+        @Query("ac") authCode: String
+    ): MessageList
+
     @GET("logoff")
     fun deAuth(
         @Header("authorization") auth: String,

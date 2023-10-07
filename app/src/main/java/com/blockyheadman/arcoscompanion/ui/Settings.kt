@@ -1,6 +1,7 @@
 package com.blockyheadman.arcoscompanion.ui
 
-import android.graphics.Bitmap
+import android.content.Context
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.VibrationEffect
 import androidx.compose.foundation.layout.Arrangement
@@ -38,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import com.blockyheadman.arcoscompanion.NotificationIDs
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.notificationManager
@@ -57,6 +56,8 @@ fun SettingsPage(externalPadding: PaddingValues) {
     var showThemeDialog by remember { mutableStateOf(false) }
     val dynamicColor = store.getMaterialYouMode.collectAsState(initial = false)
     val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
+
+    var id = 0
 
     Column (
         modifier = Modifier.padding(externalPadding),
@@ -108,27 +109,11 @@ fun SettingsPage(externalPadding: PaddingValues) {
         )
         Spacer(Modifier.height(4.dp))
         Button(onClick = {
-            val db = ContextCompat.getDrawable(context, R.drawable.bg)
-            val bit = Bitmap.createBitmap(
-                db!!.intrinsicWidth,
-                db.intrinsicHeight,
-                Bitmap.Config.ARGB_8888
+            vibrator.vibrate(
+                VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
             )
-
-            val notification = NotificationCompat.Builder(context, "ArcMailIncoming")
-                .setSmallIcon(R.drawable.arcos_logo)
-                .setContentTitle("Izaak Kuipers")
-                .setContentText("1 new message")
-                .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)
-                .setLargeIcon(bit)
-                .setStyle(
-                    NotificationCompat.InboxStyle()
-                        .setBigContentTitle("Test Message")
-                        .setSummaryText("ArcMail")
-                        .addLine("This is a test message for ArcMail notifications")
-                )
-
-            notificationManager.notify(NotificationIDs.NOTIFICATION_ID, notification.build())
+            testNotification(context, id)
+            id++
         }) {
             Text("Test ArcMail Notification")
         }
@@ -214,4 +199,28 @@ fun SettingsPage(externalPadding: PaddingValues) {
             }
         }
     }
+}
+
+fun testNotification(context: Context, id: Int) {
+    val bit = BitmapFactory.decodeResource(
+        context.resources,
+        R.drawable.launcher_icon_background
+    )
+
+    val notification = NotificationCompat.Builder(context, "ArcMailIncoming")
+        .setSmallIcon(R.drawable.arcos_logo)
+        .setContentTitle("Izaak Kuipers")
+        .setContentText("1 new message")
+        .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)
+        .setLargeIcon(bit)
+        .setStyle(
+            NotificationCompat.BigTextStyle()
+                .setBigContentTitle("Test Message")
+                .setSummaryText("ArcMail")
+                .bigText(
+                    "This is a test message for ArcMail notifications.\nNotification ID: $id"
+                )
+        )
+
+    notificationManager.notify(id, notification.build())
 }

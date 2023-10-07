@@ -213,7 +213,7 @@ fun CompanionApp() {
                         },
                         navigationIcon = {
                             Image(
-                                painter = painterResource(id = R.drawable.arcos_logo),
+                                painter = painterResource(R.drawable.arcos_logo),
                                 contentDescription = "ArcOS logo",
                                 modifier = Modifier.size(48.dp)
                             )

@@ -117,6 +117,11 @@ fun ServersPage(externalPadding: PaddingValues) {
                     Tab(
                         selected = apiTabIndex == 0,
                         onClick = {
+                            vibrator.vibrate(
+                                VibrationEffect.createPredefined(
+                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                )
+                            )
                             apiTabIndex = 0
                             privateAPIDialog.value = false
                         },
@@ -127,6 +132,11 @@ fun ServersPage(externalPadding: PaddingValues) {
                     Tab(
                         selected = apiTabIndex == 1,
                         onClick = {
+                            vibrator.vibrate(
+                                VibrationEffect.createPredefined(
+                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                )
+                            )
                             apiTabIndex = 1
                             privateAPIDialog.value = true
                         },
@@ -309,7 +319,12 @@ fun ApiCard(data: ApiSaveData) {
                 )
 
                 IconButton(
-                    onClick = { settingsExpanded = true }
+                    onClick = {
+                        vibrator.vibrate(
+                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                        )
+                        settingsExpanded = true
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
@@ -327,6 +342,11 @@ fun ApiCard(data: ApiSaveData) {
 
                         DropdownMenuItem(text = { Text("Edit") },
                             onClick = {
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
                                 runBlocking {
                                     coroutineScope {
                                         launch(Dispatchers.IO) {
@@ -347,6 +367,11 @@ fun ApiCard(data: ApiSaveData) {
                         )
                         DropdownMenuItem(text = { Text("Delete") },
                             onClick = {
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
                                 runBlocking {
                                     coroutineScope {
                                         launch(Dispatchers.IO) {

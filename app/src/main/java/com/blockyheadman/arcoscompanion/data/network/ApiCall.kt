@@ -76,6 +76,36 @@ class ApiCall {
         return data
     }
 
+    suspend fun getMessage(apiName: String, id: Int, authCode: String, auth: String): MessageList? {
+        var data: MessageList? = null
+
+        try {
+            coroutineScope {
+                async {
+                    val apiService = APIService.getInstance(apiName)
+                    val json = Gson().toJson(
+                        apiService.getFullMessage(
+                            "Bearer $auth",
+                            Base64.encodeToString(
+                                "$id".toByteArray(),
+                                Base64.NO_WRAP
+                            ),
+                            authCode
+                        )
+                    )
+
+                    Log.d("JSONOutput", json)
+                    //data = Gson().fromJson(json, MessageList::class.java)
+                    Log.d("FullMessageOutput", data.toString())
+                }.await()
+            }
+        } catch (e: Exception) {
+            errorMessage = e.message.toString()
+        }
+
+        return data
+    }
+
     suspend fun deAuthToken(apiName: String, authCode: String, auth: String) {
         try {
             coroutineScope {
@@ -97,14 +127,4 @@ class ApiCall {
             errorMessage = e.message.toString()
         }
     }
-
-    /*fun deAuthToken(apiName: String, authCode: String, auth: String) {
-        try {
-            val apiService = APIService.getInstance(apiName)
-            apiService.deAuth("Bearer $auth", authCode)
-            Log.e("DeAuth", "De-authentication successful!")
-        } catch (e: Exception) {
-            Log.e("DeAuthError", e.message.toString())
-        }
-    }*/
 }
