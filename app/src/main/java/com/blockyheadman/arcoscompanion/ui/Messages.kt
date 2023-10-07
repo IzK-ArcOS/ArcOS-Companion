@@ -127,10 +127,11 @@ fun MessagesPage(externalPadding: PaddingValues) {
             .padding(externalPadding)
             .fillMaxSize(),
         topBar = {
-            if (apis.size > 1) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (apis.size > 1) {
                     PrimaryScrollableTabRow(
                         selectedTabIndex = apiTabIndex,
                         divider = {
@@ -201,53 +202,55 @@ fun MessagesPage(externalPadding: PaddingValues) {
                             }
                         }
                     )
-                    Row {
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = {
-                                PlainTooltip {
-                                    Text("Enable Notifications")
-                                }
-                            },
-                            state = rememberTooltipState()
-                        ) {
-                            ElevatedButton(
-                                onClick = {
-                                    vibrator.vibrate(
-                                        VibrationEffect.createPredefined(
-                                            VibrationEffect.EFFECT_DOUBLE_CLICK
-                                        )
+                }
+                Row {
+                    TooltipBox(
+                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                        tooltip = {
+                            PlainTooltip {
+                                Text("Enable Notifications")
+                            }
+                        },
+                        state = rememberTooltipState()
+                    ) {
+                        ElevatedButton(
+                            onClick = {
+                                vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
-                                    when (PackageManager.PERMISSION_GRANTED) {
-                                        ContextCompat.checkSelfPermission(
+                                )
+                                when (PackageManager.PERMISSION_GRANTED) {
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) -> {
+                                        Log.d("MessagesPage", "Code requires permission")
+                                        Toast.makeText(
                                             context,
-                                            Manifest.permission.POST_NOTIFICATIONS
-                                        ) -> {
-                                            Log.d("MessagesPage", "Code requires permission")
-                                            Toast.makeText(
-                                                context,
-                                                "Notifications are already enabled!",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
+                                            "Notifications are already enabled!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
 
-                                        else -> {
-                                            Log.d("MessagesPage", "Requesting permission")
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                            } else requestNotifications(context)
-                                        }
+                                    else -> {
+                                        Log.d("MessagesPage", "Requesting permission")
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                        } else requestNotifications(context)
                                     }
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = if (!permissionGranted) Icons.Outlined.Notifications
-                                    else Icons.Filled.Notifications,
-                                    contentDescription = if (!permissionGranted) "Enable notifications"
-                                    else "Notifications enabled"
-                                )
                             }
+                        ) {
+                            Icon(
+                                imageVector = if (!permissionGranted) Icons.Outlined.Notifications
+                                else Icons.Filled.Notifications,
+                                contentDescription = if (!permissionGranted) "Enable notifications"
+                                else "Notifications enabled"
+                            )
                         }
+                    }
+                    if (apis.isNotEmpty()) {
                         Spacer(Modifier.width(4.dp))
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
@@ -262,7 +265,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                 onClick = {
                                     vibrator.vibrate(
                                         VibrationEffect.createPredefined(
-                                            VibrationEffect.EFFECT_DOUBLE_CLICK)
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        )
                                     )
                                     Log.d(
                                         "GET MESSAGES",
@@ -320,8 +324,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
                             }
                         }
                     }
-
                 }
+
             }
 
         }
@@ -378,13 +382,13 @@ fun MessagesPage(externalPadding: PaddingValues) {
             ).show()
         }
 
-        LazyColumn (
+        LazyColumn(
             Modifier.padding(innerPadding)//.padding(top = 52.dp)
         ) {
             if (messageData != null) {
                 if (messageData!!.data.isEmpty()) {
                     item {
-                        Box (
+                        Box(
                             Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
@@ -402,7 +406,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                     initialState = false
                                 ).apply { targetState = true },
                                 modifier = Modifier,
-                                enter = slideInVertically (
+                                enter = slideInVertically(
                                     initialOffsetY = { 120 }
                                 ) + fadeIn(
                                     initialAlpha = 0f
@@ -418,21 +422,20 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 Log.d("MessageData", messageData.toString())
             } else {
                 item {
-                    Box (
+                    Box(
                         Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Loading your inbox..",
+                            text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
+                            else "Add an API to view messages.",
                             textAlign = TextAlign.Center
                         )
                     }
                 }
             }
         }
-
     }
-
 }
 
 @Composable
