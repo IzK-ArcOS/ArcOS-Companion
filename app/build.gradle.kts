@@ -100,6 +100,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0") // Added for Room
     implementation("androidx.room:room-ktx:$roomVersion") // Added for Room
     ksp("androidx.room:room-compiler:$roomVersion") // Added for Room
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0") // Added for SystemUI Controller
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

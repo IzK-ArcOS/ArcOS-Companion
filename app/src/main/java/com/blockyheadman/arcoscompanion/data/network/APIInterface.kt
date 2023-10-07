@@ -1,6 +1,7 @@
 package com.blockyheadman.arcoscompanion.data.network
 
 import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
+import com.blockyheadman.arcoscompanion.data.classes.FullMessage
 import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -26,7 +27,7 @@ interface APIService {
         @Header("authorization") auth: String,
         @Query("id") id: String,
         @Query("ac") authCode: String
-    ): MessageList
+    ): FullMessage
 
     @GET("logoff")
     fun deAuth(

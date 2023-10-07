@@ -80,6 +80,7 @@ import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
 import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
+import com.blockyheadman.arcoscompanion.hapticsEnabled
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -117,7 +118,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                     Tab(
                         selected = apiTabIndex == 0,
                         onClick = {
-                            vibrator.vibrate(
+                            if(hapticsEnabled.value) vibrator.vibrate(
                                 VibrationEffect.createPredefined(
                                     VibrationEffect.EFFECT_DOUBLE_CLICK
                                 )
@@ -132,7 +133,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                     Tab(
                         selected = apiTabIndex == 1,
                         onClick = {
-                            vibrator.vibrate(
+                            if(hapticsEnabled.value) vibrator.vibrate(
                                 VibrationEffect.createPredefined(
                                     VibrationEffect.EFFECT_DOUBLE_CLICK
                                 )
@@ -150,7 +151,7 @@ fun ServersPage(externalPadding: PaddingValues) {
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
-                    vibrator.vibrate(
+                    if(hapticsEnabled.value) vibrator.vibrate(
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                     )
                     showAddAPI.value = true
@@ -330,7 +331,7 @@ fun ApiCard(data: ApiSaveData) {
 
                 IconButton(
                     onClick = {
-                        vibrator.vibrate(
+                        if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                         )
                         settingsExpanded = true
@@ -352,7 +353,7 @@ fun ApiCard(data: ApiSaveData) {
 
                         DropdownMenuItem(text = { Text("Edit") },
                             onClick = {
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -377,7 +378,7 @@ fun ApiCard(data: ApiSaveData) {
                         )
                         DropdownMenuItem(text = { Text("Delete") },
                             onClick = {
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -554,7 +555,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         showAddAPI.value = false
-                        vibrator.vibrate(
+                        if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(
                                 VibrationEffect.EFFECT_DOUBLE_CLICK
                             )
@@ -571,7 +572,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                 focusManager.clearFocus()
                                 buttonClicked = true
 
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -591,7 +592,7 @@ fun NewApiDialog(apiDao: ApiSaveDao) {
                                 focusManager.clearFocus()
                                 buttonClicked = true
 
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -837,7 +838,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         showEditAPI.value = false
-                        vibrator.vibrate(
+                        if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(
                                 VibrationEffect.EFFECT_DOUBLE_CLICK
                             )
@@ -854,7 +855,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                                 focusManager.clearFocus()
                                 buttonClicked = true
 
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -872,7 +873,7 @@ fun EditApiDialog(apiDao: ApiSaveDao, api: ApiSaveData) {
                                 focusManager.clearFocus()
                                 buttonClicked = true
 
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )

@@ -79,6 +79,7 @@ import com.blockyheadman.arcoscompanion.data.classes.MessageData
 import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
 import com.blockyheadman.arcoscompanion.getAuthToken
+import com.blockyheadman.arcoscompanion.hapticsEnabled
 import com.blockyheadman.arcoscompanion.ui.theme.ArcOSCompanionTheme
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.CoroutineScope
@@ -142,7 +143,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                 Tab(
                                     selected = apiTabIndex == apisSorted.indexOf(api),
                                     onClick = {
-                                        vibrator.vibrate(
+                                        if(hapticsEnabled.value) vibrator.vibrate(
                                             VibrationEffect.createPredefined(
                                                 VibrationEffect.EFFECT_DOUBLE_CLICK
                                             )
@@ -215,7 +216,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                     ) {
                         ElevatedButton(
                             onClick = {
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -263,7 +264,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         ) {
                             ElevatedButton(
                                 onClick = {
-                                    vibrator.vibrate(
+                                    if(hapticsEnabled.value) vibrator.vibrate(
                                         VibrationEffect.createPredefined(
                                             VibrationEffect.EFFECT_DOUBLE_CLICK
                                         )
@@ -472,7 +473,7 @@ fun MessageCard(messageInfo: MessageData) {
                 }
                 IconButton(
                     onClick = {
-                        vibrator.vibrate(
+                        if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                         )
                         settingsExpanded = true
@@ -491,7 +492,7 @@ fun MessageCard(messageInfo: MessageData) {
                         // TODO add "View Full Message", delete, new message, and reply functionality
                         DropdownMenuItem(text = { Text("View Full") },
                             onClick = {
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )
@@ -515,7 +516,7 @@ fun MessageCard(messageInfo: MessageData) {
 
                         DropdownMenuItem(text = { Text("Reply") },
                             onClick = {
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
                                     )

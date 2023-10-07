@@ -15,6 +15,7 @@ class UserPreferences(private val context: Context) {
         private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("UserPreferences")
         private val THEME_MODE = intPreferencesKey("theme_mode")
         private val MATERIAL_MODE = booleanPreferencesKey("material_mode")
+        private val HAPTICS_MODE = booleanPreferencesKey("haptics_mode")
     }
 
     val getThemeMode: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -34,6 +35,16 @@ class UserPreferences(private val context: Context) {
     suspend fun saveMaterialYouMode(option: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[MATERIAL_MODE] = option
+        }
+    }
+
+    val getHapticsMode: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[HAPTICS_MODE] ?: false
+    }
+
+    suspend fun saveHapticsMode(option: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[HAPTICS_MODE] = option
         }
     }
 }

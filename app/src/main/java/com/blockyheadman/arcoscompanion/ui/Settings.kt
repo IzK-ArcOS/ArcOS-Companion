@@ -41,6 +41,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.data.UserPreferences
+import com.blockyheadman.arcoscompanion.hapticsEnabled
 import com.blockyheadman.arcoscompanion.notificationManager
 import com.blockyheadman.arcoscompanion.vibrator
 import kotlinx.coroutines.CoroutineScope
@@ -56,6 +57,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
     var showThemeDialog by remember { mutableStateOf(false) }
     val dynamicColor = store.getMaterialYouMode.collectAsState(initial = false)
     val darkThemeEnabled = store.getThemeMode.collectAsState(initial = 0)
+    hapticsEnabled = store.getHapticsMode.collectAsState(initial = false)
 
     var id = 0
 
@@ -78,7 +80,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
                     CoroutineScope(Dispatchers.IO).launch {
                         store.saveMaterialYouMode(!dynamicColor.value)
                     }
-                    vibrator.vibrate(
+                    if(hapticsEnabled.value) vibrator.vibrate(
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                     )
                 })
@@ -87,9 +89,26 @@ fun SettingsPage(externalPadding: PaddingValues) {
             }
         }
 
+        Row (
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Switch(checked = hapticsEnabled.value, onCheckedChange = {
+                CoroutineScope(Dispatchers.IO).launch {
+                    store.saveHapticsMode(!hapticsEnabled.value)
+                }
+                if(hapticsEnabled.value) vibrator.vibrate(
+                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+                )
+            })
+            Spacer(Modifier.size(5.dp))
+            Text("Enable Haptics")
+        }
+
         Button(onClick = {
             showThemeDialog = !showThemeDialog
-            vibrator.vibrate(
+            if(hapticsEnabled.value) vibrator.vibrate(
                 VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
             )
         }) {
@@ -109,7 +128,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
         )
         Spacer(Modifier.height(4.dp))
         Button(onClick = {
-            vibrator.vibrate(
+            if(hapticsEnabled.value) vibrator.vibrate(
                 VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
             )
             testNotification(context, id)
@@ -154,7 +173,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(0)
                                 }
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
                                 )
                             })
@@ -167,7 +186,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(1)
                                 }
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
                                 )
                             })
@@ -180,14 +199,14 @@ fun SettingsPage(externalPadding: PaddingValues) {
                                 CoroutineScope(Dispatchers.IO).launch {
                                     store.saveThemeMode(2)
                                 }
-                                vibrator.vibrate(
+                                if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
                                 )
                             })
                     }
                     Button(onClick = {
                         showThemeDialog = false
-                        vibrator.vibrate(
+                        if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                         )
                     }) {

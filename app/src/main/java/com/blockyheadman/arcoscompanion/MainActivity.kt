@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -73,6 +74,7 @@ lateinit var notificationManager: NotificationManager
 
 lateinit var apiDao: ApiSaveDao
 var apis by mutableStateOf(emptyList<ApiSaveData>())
+var hapticsEnabled: State<Boolean> = mutableStateOf(false)
 
 object NotificationIDs {
     const val NOTIFICATION_ID = 112
@@ -228,7 +230,7 @@ fun CompanionApp() {
                                 selected = selectedNavBarItem == index,
                                 onClick = {
                                     selectedNavBarItem = index
-                                    vibrator.vibrate(
+                                    if(hapticsEnabled.value) vibrator.vibrate(
                                         VibrationEffect.createPredefined(
                                             VibrationEffect.EFFECT_DOUBLE_CLICK
                                         )
