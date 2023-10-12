@@ -15,6 +15,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
@@ -48,6 +51,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -63,6 +67,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -113,6 +118,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
     var messageData: MessageList? by rememberSaveable { mutableStateOf(null) }
     var messageDataError by rememberSaveable { mutableStateOf(0) }
 
+    var activeCardId by rememberSaveable { mutableStateOf<Int?>(null) }
+
     permissionGranted = when (PackageManager.PERMISSION_GRANTED) {
         ContextCompat.checkSelfPermission(
             context,
@@ -128,28 +135,161 @@ fun MessagesPage(externalPadding: PaddingValues) {
             .padding(externalPadding)
             .fillMaxSize(),
         topBar = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (apis.size > 1) {
-                    PrimaryScrollableTabRow(
-                        selectedTabIndex = apiTabIndex,
-                        divider = {
-                            HorizontalDivider(Modifier.fillMaxWidth())
-                        },
-                        tabs = {
-                            apisSorted.forEach { api ->
-                                Tab(
-                                    selected = apiTabIndex == apisSorted.indexOf(api),
+            if (activeCardId == null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (apis.size > 1) {
+                        PrimaryScrollableTabRow(
+                            selectedTabIndex = apiTabIndex,
+                            divider = {
+                                HorizontalDivider(Modifier.fillMaxWidth())
+                            },
+                            tabs = {
+                                apisSorted.forEach { api ->
+                                    Tab(
+                                        selected = apiTabIndex == apisSorted.indexOf(api),
+                                        onClick = {
+                                            if(hapticsEnabled.value) vibrator.vibrate(
+                                                VibrationEffect.createPredefined(
+                                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                                )
+                                            )
+
+                                            apiTabIndex = apisSorted.indexOf(api)
+                                            val scope = CoroutineScope(Job())
+                                            scope.launch {
+                                                // TODO Make this a function
+                                                messageData = null
+                                                messageDataError = 0
+
+                                                val token: String? = async {
+                                                    getAuthToken(
+                                                        apisSorted[apiTabIndex].name,
+                                                        apisSorted[apiTabIndex].username,
+                                                        apisSorted[apiTabIndex].password,
+                                                        apisSorted[apiTabIndex].authCode
+                                                    )
+                                                }.await()
+
+                                                if (token.isNullOrBlank()) {
+                                                    Log.e(
+                                                        "GET MESSAGES",
+                                                        "Empty token. Stopping.."
+                                                    )
+                                                    messageDataError = 1
+                                                    return@launch
+                                                }
+
+                                                Log.d(
+                                                    "GET MESSAGES",
+                                                    "Api name: ${apisSorted[apiTabIndex].name}"
+                                                )
+                                                Log.d("GET MESSAGES", "Token: $token")
+                                                messageData = getMessages(
+                                                    apisSorted[apiTabIndex].name,
+                                                    apisSorted[apiTabIndex].authCode,
+                                                    token
+                                                )
+                                                ApiCall().deAuthToken(
+                                                    apisSorted[apiTabIndex].name,
+                                                    apisSorted[apiTabIndex].authCode,
+                                                    token
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                    ) {
+                                        Text("(${api.username})")
+                                        Text(
+                                            text = api.name,
+                                            overflow = TextOverflow.Ellipsis,
+                                            softWrap = false
+                                        )
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    Row {
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = {
+                                PlainTooltip {
+                                    Text("Enable Notifications")
+                                }
+                            },
+                            state = rememberTooltipState()
+                        ) {
+                            ElevatedButton(
+                                onClick = {
+                                    if (hapticsEnabled.value) vibrator.vibrate(
+                                        VibrationEffect.createPredefined(
+                                            VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        )
+                                    )
+                                    when (PackageManager.PERMISSION_GRANTED) {
+                                        ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.POST_NOTIFICATIONS
+                                        ) -> {
+                                            Log.d(
+                                                "MessagesPage",
+                                                "Code requires permission"
+                                            )
+                                            Toast.makeText(
+                                                context,
+                                                "Notifications are already enabled!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        else -> {
+                                            Log.d("MessagesPage", "Requesting permission")
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                            } else requestNotifications(context)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (!permissionGranted) Icons.Outlined.Notifications
+                                    else Icons.Filled.Notifications,
+                                    contentDescription = if (!permissionGranted) "Enable notifications"
+                                    else "Notifications enabled"
+                                )
+                            }
+                        }
+                        if (apis.isNotEmpty()) {
+                            Spacer(Modifier.width(4.dp))
+                            TooltipBox(
+                                positionProvider = TooltipDefaults
+                                    .rememberPlainTooltipPositionProvider(),
+                                tooltip = {
+                                    PlainTooltip {
+                                        Text("Reload Messages")
+                                    }
+                                },
+                                state = rememberTooltipState()
+                            ) {
+                                ElevatedButton(
                                     onClick = {
-                                        if(hapticsEnabled.value) vibrator.vibrate(
+                                        if (hapticsEnabled.value) vibrator.vibrate(
                                             VibrationEffect.createPredefined(
                                                 VibrationEffect.EFFECT_DOUBLE_CLICK
                                             )
                                         )
+                                        Log.d(
+                                            "GET MESSAGES",
+                                            "Api name: ${apis[apiTabIndex].name}"
+                                        )
+                                        Log.d(
+                                            "GET MESSAGES",
+                                            "Api auth code: ${apis[apiTabIndex].authCode}"
+                                        )
 
-                                        apiTabIndex = apisSorted.indexOf(api)
                                         val scope = CoroutineScope(Job())
                                         scope.launch {
                                             // TODO Make this a function
@@ -167,8 +307,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                                             if (token.isNullOrBlank()) {
                                                 Log.e(
-                                                    "GET MESSAGES",
-                                                    "Empty token. Stopping.."
+                                                    "GET MESSAGES", "Empty token. Stopping.."
                                                 )
                                                 messageDataError = 1
                                                 return@launch
@@ -176,7 +315,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                                             Log.d(
                                                 "GET MESSAGES",
-                                                "Api name: ${apisSorted[apiTabIndex].name}"
+                                                "Api name: ${apis[apiTabIndex].name}"
                                             )
                                             Log.d("GET MESSAGES", "Token: $token")
                                             messageData = getMessages(
@@ -189,139 +328,15 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                                 apisSorted[apiTabIndex].authCode,
                                                 token
                                             )
+
                                         }
-                                    },
-                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                    }
                                 ) {
-                                    Text("(${api.username})")
-                                    Text(
-                                        text = api.name,
-                                        overflow = TextOverflow.Ellipsis,
-                                        softWrap = false
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Reload"
                                     )
                                 }
-                            }
-                        }
-                    )
-                }
-                Row {
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                        tooltip = {
-                            PlainTooltip {
-                                Text("Enable Notifications")
-                            }
-                        },
-                        state = rememberTooltipState()
-                    ) {
-                        ElevatedButton(
-                            onClick = {
-                                if(hapticsEnabled.value) vibrator.vibrate(
-                                    VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
-                                    )
-                                )
-                                when (PackageManager.PERMISSION_GRANTED) {
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.POST_NOTIFICATIONS
-                                    ) -> {
-                                        Log.d("MessagesPage", "Code requires permission")
-                                        Toast.makeText(
-                                            context,
-                                            "Notifications are already enabled!",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-
-                                    else -> {
-                                        Log.d("MessagesPage", "Requesting permission")
-                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                        } else requestNotifications(context)
-                                    }
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (!permissionGranted) Icons.Outlined.Notifications
-                                else Icons.Filled.Notifications,
-                                contentDescription = if (!permissionGranted) "Enable notifications"
-                                else "Notifications enabled"
-                            )
-                        }
-                    }
-                    if (apis.isNotEmpty()) {
-                        Spacer(Modifier.width(4.dp))
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                            tooltip = {
-                                PlainTooltip {
-                                    Text("Reload Messages")
-                                }
-                            },
-                            state = rememberTooltipState()
-                        ) {
-                            ElevatedButton(
-                                onClick = {
-                                    if(hapticsEnabled.value) vibrator.vibrate(
-                                        VibrationEffect.createPredefined(
-                                            VibrationEffect.EFFECT_DOUBLE_CLICK
-                                        )
-                                    )
-                                    Log.d(
-                                        "GET MESSAGES",
-                                        "Api name: ${apis[apiTabIndex].name}"
-                                    )
-                                    Log.d(
-                                        "GET MESSAGES",
-                                        "Api auth code: ${apis[apiTabIndex].authCode}"
-                                    )
-
-                                    val scope = CoroutineScope(Job())
-                                    scope.launch {
-                                        // TODO Make this a function
-                                        messageData = null
-                                        messageDataError = 0
-
-                                        val token: String? = async {
-                                            getAuthToken(
-                                                apisSorted[apiTabIndex].name,
-                                                apisSorted[apiTabIndex].username,
-                                                apisSorted[apiTabIndex].password,
-                                                apisSorted[apiTabIndex].authCode
-                                            )
-                                        }.await()
-
-                                        if (token.isNullOrBlank()) {
-                                            Log.e("GET MESSAGES", "Empty token. Stopping..")
-                                            messageDataError = 1
-                                            return@launch
-                                        }
-
-                                        Log.d(
-                                            "GET MESSAGES",
-                                            "Api name: ${apis[apiTabIndex].name}"
-                                        )
-                                        Log.d("GET MESSAGES", "Token: $token")
-                                        messageData = getMessages(
-                                            apisSorted[apiTabIndex].name,
-                                            apisSorted[apiTabIndex].authCode,
-                                            token
-                                        )
-                                        ApiCall().deAuthToken(
-                                            apisSorted[apiTabIndex].name,
-                                            apisSorted[apiTabIndex].authCode,
-                                            token
-                                        )
-
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Reload"
-                                )
                             }
                         }
                     }
@@ -382,65 +397,95 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 Toast.LENGTH_SHORT
             ).show()
         }
+        if (activeCardId == null) {
+            LazyColumn(
+                Modifier.padding(innerPadding)//.padding(top = 52.dp)
+            ) {
+                if (messageData != null) {
+                    if (messageData!!.data.isEmpty()) {
+                        item {
+                            Box(
+                                Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Lonely mailbox you got there..",
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    } else {
+                        messageData?.data?.let { list ->
+                            items(list.size) { messageIndex ->
+                                AnimatedVisibility(
+                                    visibleState = MutableTransitionState(
+                                        initialState = false
+                                    ).apply { targetState = true },
+                                    modifier = Modifier,
+                                    enter = slideInVertically(
+                                        initialOffsetY = { 120 }
+                                    ) + fadeIn(
+                                        initialAlpha = 0f
+                                    ),
+                                    exit = slideOutVertically() + fadeOut(),
+                                ) {
+                                    MessageCard(
+                                        messageData!!.data[messageIndex],
+                                        navigateToFullMessage = {
+                                            activeCardId = it //messageData!!.data[messageIndex].id
+                                        }
+                                    )
+                                }
 
-        LazyColumn(
-            Modifier.padding(innerPadding)//.padding(top = 52.dp)
-        ) {
-            if (messageData != null) {
-                if (messageData!!.data.isEmpty()) {
+                            }
+                        }
+                    }
+                    Log.d("MessageData", messageData.toString())
+                } else {
                     item {
                         Box(
                             Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Lonely mailbox you got there..",
+                                text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
+                                else "Add an API to view messages.",
                                 textAlign = TextAlign.Center
                             )
                         }
                     }
-                } else {
-                    messageData?.data?.let { list ->
-                        items(list.size) {
-                            AnimatedVisibility(
-                                visibleState = MutableTransitionState(
-                                    initialState = false
-                                ).apply { targetState = true },
-                                modifier = Modifier,
-                                enter = slideInVertically(
-                                    initialOffsetY = { 120 }
-                                ) + fadeIn(
-                                    initialAlpha = 0f
-                                ),
-                                exit = slideOutVertically() + fadeOut(),
-                            ) {
-                                MessageCard(messageData!!.data[it])
-                            }
-
-                        }
-                    }
                 }
-                Log.d("MessageData", messageData.toString())
-            } else {
-                item {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
-                            else "Add an API to view messages.",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
+            }
+        } else {
+            AnimatedVisibility(
+                visibleState = MutableTransitionState(
+                    initialState = false
+                ).apply { targetState = true },
+                modifier = Modifier,
+                enter = fadeIn(
+                    initialAlpha = 0f
+                ) + scaleIn(
+                    initialScale = 0f,
+                    transformOrigin = TransformOrigin(0.5f, 1f)
+                ),
+                exit = fadeOut() + scaleOut(),
+            ) {
+                FullMessageCard(
+                    apisSorted[apiTabIndex].name,
+                    activeCardId!!,
+                    onDismiss = { activeCardId = null },
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
         }
     }
 }
 
 @Composable
-fun MessageCard(messageInfo: MessageData) {
+fun MessageCard(
+    messageInfo: MessageData,
+    navigateToFullMessage: (Int) -> Unit = { }
+) {
     val context = LocalContext.current
     var settingsExpanded by rememberSaveable { mutableStateOf(false) }
     val bodyContents = messageInfo.partialBody.split("\n", limit = 2)
@@ -492,6 +537,7 @@ fun MessageCard(messageInfo: MessageData) {
                         // TODO add "View Full Message", delete, new message, and reply functionality
                         DropdownMenuItem(text = { Text("View Full") },
                             onClick = {
+                                navigateToFullMessage(messageInfo.id)
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
                                         VibrationEffect.EFFECT_DOUBLE_CLICK
@@ -562,6 +608,43 @@ fun MessageCard(messageInfo: MessageData) {
     }
 }
 
+@Composable
+fun FullMessageCard(
+    apiName: String,
+    messageId: Int,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxSize()
+    ) {
+        Column {
+            IconButton(onClick = {
+                onDismiss()
+            }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to messages screen"
+                )
+            }
+            Text(
+                text = "Title: This is a pretty long title for testing things",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.W500
+            )
+
+            Text(text = "From: Blocky")
+            Text(text = "To: Izaak Kuipers")
+
+            Text(
+                text = "This is a test body for a message card that's pretty long and " +
+                        "should wrap at least a line or two depending on if this " +
+                        "is a huge message."
+            )
+        }
+    }
+}
+
 fun requestNotifications(context: Context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
         context.startActivity(
@@ -621,5 +704,13 @@ fun MessageCardPreview() {
     )
     ArcOSCompanionTheme(true) {
         MessageCard(messageInfo)
+    }
+}
+
+@Preview
+@Composable
+fun FullMessageCardPreview() {
+    ArcOSCompanionTheme(true) {
+        FullMessageCard("community.arcapi.nl", 1234567890, {}, Modifier)
     }
 }

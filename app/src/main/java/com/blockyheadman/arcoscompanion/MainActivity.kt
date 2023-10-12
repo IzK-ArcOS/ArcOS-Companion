@@ -51,6 +51,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.blockyheadman.arcoscompanion.data.ApiSaveDao
 import com.blockyheadman.arcoscompanion.data.ApiSaveData
 import com.blockyheadman.arcoscompanion.data.ApiSaveDatabase
@@ -58,6 +61,7 @@ import com.blockyheadman.arcoscompanion.data.UserPreferences
 import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
 import com.blockyheadman.arcoscompanion.data.navBarItems
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
+import com.blockyheadman.arcoscompanion.data.network.NotificationWorker
 import com.blockyheadman.arcoscompanion.ui.HomePage
 import com.blockyheadman.arcoscompanion.ui.MessagesPage
 import com.blockyheadman.arcoscompanion.ui.ServersPage
@@ -67,6 +71,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.time.Duration
 
 lateinit var vibrator: Vibrator
 lateinit var connectivityManager: ConnectivityManager
@@ -149,6 +154,14 @@ fun CompanionApp() {
 
     val db = ApiSaveDatabase.getInstance(context)
     apiDao = db.apiSaveDao()
+
+    val notificationWorkRequest: WorkRequest =
+        PeriodicWorkRequestBuilder<NotificationWorker>(Duration.ofSeconds(5))
+            .build()
+
+    WorkManager
+        .getInstance(context)
+        .enqueue(notificationWorkRequest)
 
     LaunchedEffect(connectionAvailable) {
         coroutineScope {

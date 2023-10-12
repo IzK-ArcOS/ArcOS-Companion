@@ -66,7 +66,7 @@ fun SettingsPage(externalPadding: PaddingValues) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Demo Version | v1.0.0.DEMO",
+            text = "Version | v1.0.0",
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(4.dp))
@@ -75,18 +75,20 @@ fun SettingsPage(externalPadding: PaddingValues) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Switch(checked = dynamicColor.value, onCheckedChange = {
+            Switch(
+                checked = dynamicColor.value,
+                onCheckedChange = {
                     CoroutineScope(Dispatchers.IO).launch {
                         store.saveMaterialYouMode(!dynamicColor.value)
                     }
                     if(hapticsEnabled.value) vibrator.vibrate(
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                     )
-                })
-                Spacer(Modifier.size(5.dp))
-                Text("Enable Dynamic Color")
-            }
+                },
+                enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            )
+            Spacer(Modifier.size(5.dp))
+            Text("Enable Dynamic Color")
         }
 
         Row (
