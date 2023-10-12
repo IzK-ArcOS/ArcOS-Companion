@@ -4,7 +4,7 @@
 ![Lines of code](https://img.shields.io/tokei/lines/github/Blockyheadman/ArcOS-Companion?color=%234287f5)
 ![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/Blockyheadman/ArcOS-Companion)
 
-You ever need a way to access your ArcOS stuff on the go? Might I suggest the custom-made, Android app for ArcOS!
+You ever need a way to access your ArcOS stuff on the go? How about using the custom-made, Android app for ArcOS!
 
 ArcOS Companion's goal is to allow for users to connect with their (possibly) many users on different apis all in one place.
 
