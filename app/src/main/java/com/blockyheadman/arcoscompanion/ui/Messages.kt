@@ -19,6 +19,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -472,6 +473,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
             ) {
                 FullMessageCard(
                     apisSorted[apiTabIndex].name,
+                    apisSorted[apiTabIndex].username,
+                    apisSorted[apiTabIndex].authCode,
                     activeCardId!!,
                     onDismiss = { activeCardId = null },
                     modifier = Modifier.padding(innerPadding)
@@ -534,7 +537,7 @@ fun MessageCard(
                         onDismissRequest = { settingsExpanded = false }
                     ) {
 
-                        // TODO add "View Full Message", delete, new message, and reply functionality
+                        // TODO add delete, new message, and reply functionality
                         DropdownMenuItem(text = { Text("View Full") },
                             onClick = {
                                 navigateToFullMessage(messageInfo.id)
@@ -544,12 +547,6 @@ fun MessageCard(
                                     )
                                 )
 
-                                // TODO View full message
-                                Toast.makeText(
-                                    context,
-                                    "Feature not yet available",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                                 settingsExpanded = false
                             },
                             leadingIcon = {
@@ -611,6 +608,8 @@ fun MessageCard(
 @Composable
 fun FullMessageCard(
     apiName: String,
+    apiUsername: String,
+    apiAuthCode: String,
     messageId: Int,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -618,19 +617,46 @@ fun FullMessageCard(
     Surface(
         modifier = modifier.fillMaxSize()
     ) {
+        val context = LocalContext.current
         Column {
-            IconButton(onClick = {
-                onDismiss()
-            }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back to messages screen"
-                )
+            Row {
+                IconButton(
+                    onClick = {
+                        onDismiss()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back to messages screen"
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(apiUsername)
+                    Text(apiName)
+                }
+                IconButton(onClick = {
+                    // TODO Open Context menu
+                    Toast.makeText(
+                        context,
+                        "Feature not yet available",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Message context menu"
+                    )
+                }
             }
             Text(
                 text = "Title: This is a pretty long title for testing things",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.W500
+                fontSize = 28.sp,
+                fontWeight = FontWeight.W500,
+                lineHeight = 28.sp
             )
 
             Text(text = "From: Blocky")
@@ -711,6 +737,13 @@ fun MessageCardPreview() {
 @Composable
 fun FullMessageCardPreview() {
     ArcOSCompanionTheme(true) {
-        FullMessageCard("community.arcapi.nl", 1234567890, {}, Modifier)
+        FullMessageCard(
+            "community.arcapi.nl",
+            "Blocky",
+            "",
+            1234567890,
+            {},
+            Modifier
+        )
     }
 }
