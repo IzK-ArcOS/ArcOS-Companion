@@ -15,8 +15,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +42,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,7 +51,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -68,7 +66,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -398,88 +395,85 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 Toast.LENGTH_SHORT
             ).show()
         }
-        if (activeCardId == null) {
-            LazyColumn(
-                Modifier.padding(innerPadding)//.padding(top = 52.dp)
-            ) {
-                if (messageData != null) {
-                    if (messageData!!.data.isEmpty()) {
-                        item {
-                            Box(
-                                Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Lonely mailbox you got there..",
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    } else {
-                        messageData?.data?.let { list ->
-                            items(list.size) { messageIndex ->
-                                AnimatedVisibility(
-                                    visibleState = MutableTransitionState(
-                                        initialState = false
-                                    ).apply { targetState = true },
-                                    modifier = Modifier,
-                                    enter = slideInVertically(
-                                        initialOffsetY = { 120 }
-                                    ) + fadeIn(
-                                        initialAlpha = 0f
-                                    ),
-                                    exit = slideOutVertically() + fadeOut(),
-                                ) {
-                                    MessageCard(
-                                        messageData!!.data[messageIndex],
-                                        navigateToFullMessage = {
-                                            activeCardId = it //messageData!!.data[messageIndex].id
-                                        }
-                                    )
-                                }
-
-                            }
-                        }
-                    }
-                    Log.d("MessageData", messageData.toString())
-                } else {
+        LazyColumn(
+            Modifier.padding(innerPadding)//.padding(top = 52.dp)
+        ) {
+            if (messageData != null) {
+                if (messageData!!.data.isEmpty()) {
                     item {
                         Box(
                             Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
-                                else "Add an API to view messages.",
+                                text = "Lonely mailbox you got there..",
                                 textAlign = TextAlign.Center
                             )
                         }
                     }
+                } else {
+                    messageData?.data?.let { list ->
+                        items(list.size) { messageIndex ->
+                            AnimatedVisibility(
+                                visibleState = MutableTransitionState(
+                                    initialState = false
+                                ).apply { targetState = true },
+                                modifier = Modifier,
+                                enter = slideInVertically(
+                                    initialOffsetY = { 120 }
+                                ) + fadeIn(
+                                    initialAlpha = 0f
+                                ),
+                                exit = slideOutVertically() + fadeOut(),
+                            ) {
+                                MessageCard(
+                                    messageData!!.data[messageIndex],
+                                    navigateToFullMessage = {
+                                        activeCardId = it //messageData!!.data[messageIndex].id
+                                    }
+                                )
+                            }
+
+                        }
+                    }
+                }
+                Log.d("MessageData", messageData.toString())
+            } else {
+                item {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
+                            else "Add an API to view messages.",
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
-        } else {
-            AnimatedVisibility(
-                visibleState = MutableTransitionState(
-                    initialState = false
-                ).apply { targetState = true },
-                modifier = Modifier,
-                enter = fadeIn(
-                    initialAlpha = 0f
-                ) + scaleIn(
-                    initialScale = 0f,
-                    transformOrigin = TransformOrigin(0.5f, 1f)
-                ),
-                exit = fadeOut() + scaleOut(),
-            ) {
-                FullMessageCard(
-                    apisSorted[apiTabIndex].name,
-                    apisSorted[apiTabIndex].username,
-                    apisSorted[apiTabIndex].authCode,
-                    activeCardId!!,
-                    onDismiss = { activeCardId = null },
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+        }
+
+        AnimatedVisibility(
+            visibleState = MutableTransitionState(
+                initialState = false
+            ).apply { targetState = activeCardId != null },
+            modifier = Modifier,
+            enter = fadeIn(
+                initialAlpha = 0f
+            ) + slideInVertically(
+                initialOffsetY = { 600 }
+            ),
+            exit = fadeOut() + slideOutVertically(),
+        ) {
+            FullMessageCard(
+                apisSorted[apiTabIndex].name,
+                apisSorted[apiTabIndex].username,
+                apisSorted[apiTabIndex].authCode,
+                activeCardId!!,
+                onDismiss = { activeCardId = null },
+                modifier = Modifier.padding(innerPadding)
+            )
         }
     }
 }
@@ -614,11 +608,18 @@ fun FullMessageCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxSize()
+    ElevatedCard(
+        modifier = modifier.fillMaxSize(),
+        shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp),//RoundedCornerShape(24.dp, ),
+        colors = CardDefaults.cardColors(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.onBackground
+        )
     ) {
         val context = LocalContext.current
-        Column {
+        Column(
+            Modifier.padding(4.dp)
+        ) {
             Row {
                 IconButton(
                     onClick = {
@@ -653,15 +654,16 @@ fun FullMessageCard(
                 }
             }
             Text(
-                text = "Title: This is a pretty long title for testing things",
+                text = "This is a pretty long title for testing things",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.W500,
-                lineHeight = 28.sp
+                lineHeight = 28.sp,
+                textAlign = TextAlign.Center
             )
 
             Text(text = "From: Blocky")
             Text(text = "To: Izaak Kuipers")
-
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = "This is a test body for a message card that's pretty long and " +
                         "should wrap at least a line or two depending on if this " +
