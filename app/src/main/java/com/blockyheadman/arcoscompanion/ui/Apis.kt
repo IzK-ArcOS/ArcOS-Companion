@@ -349,7 +349,24 @@ fun ApiCard(data: ApiSaveData) {
                             dismissOnClickOutside = true
                         )
                     ) {
-
+                        DropdownMenuItem(text = { Text("Instance Info") },
+                            onClick = {
+                                if(hapticsEnabled.value) vibrator.vibrate(
+                                    VibrationEffect.createPredefined(
+                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    )
+                                )
+                                // TODO show api info
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(
+                                        R.drawable.baseline_remove_red_eye_24
+                                    ),
+                                    contentDescription = "View"
+                                )
+                            }
+                        )
                         DropdownMenuItem(text = { Text("Edit") },
                             onClick = {
                                 if(hapticsEnabled.value) vibrator.vibrate(

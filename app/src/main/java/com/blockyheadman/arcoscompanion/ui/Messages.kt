@@ -17,6 +17,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -92,6 +94,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.text.SimpleDateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +117,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
     var apiTabIndex by rememberSaveable { mutableIntStateOf(0) }
 
-    var messageData: MessageList? by rememberSaveable { mutableStateOf(null) }
+    var messagesData: MessageList? by rememberSaveable { mutableStateOf(null) }
     var messageDataError by rememberSaveable { mutableStateOf(0) }
 
     var activeCardId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -159,7 +163,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                             val scope = CoroutineScope(Job())
                                             scope.launch {
                                                 // TODO Make this a function
-                                                messageData = null
+                                                messagesData = null
                                                 messageDataError = 0
 
                                                 val token: String? = async {
@@ -185,7 +189,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                                     "Api name: ${apisSorted[apiTabIndex].name}"
                                                 )
                                                 Log.d("GET MESSAGES", "Token: $token")
-                                                messageData = getMessages(
+                                                messagesData = getMessages(
                                                     apisSorted[apiTabIndex].name,
                                                     apisSorted[apiTabIndex].authCode,
                                                     token
@@ -291,7 +295,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                         val scope = CoroutineScope(Job())
                                         scope.launch {
                                             // TODO Make this a function
-                                            messageData = null
+                                            messagesData = null
                                             messageDataError = 0
 
                                             val token: String? = async {
@@ -316,7 +320,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                                 "Api name: ${apis[apiTabIndex].name}"
                                             )
                                             Log.d("GET MESSAGES", "Token: $token")
-                                            messageData = getMessages(
+                                            messagesData = getMessages(
                                                 apisSorted[apiTabIndex].name,
                                                 apisSorted[apiTabIndex].authCode,
                                                 token
@@ -352,7 +356,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                 launch(Dispatchers.IO) {
                     // TODO Make this a function
                     if (apis.isNotEmpty()) {
-                        messageData = null
+                        messagesData = null
                         messageDataError = 0
 
                         val token: String? = async {
@@ -372,7 +376,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
 
                         Log.d("GET MESSAGES", "Api name: ${apis[apiTabIndex].name}")
                         Log.d("GET MESSAGES", "Token: $token")
-                        messageData = getMessages(
+                        messagesData = getMessages(
                             apisSorted[apiTabIndex].name,
                             apisSorted[apiTabIndex].authCode,
                             token
@@ -398,8 +402,8 @@ fun MessagesPage(externalPadding: PaddingValues) {
         LazyColumn(
             Modifier.padding(innerPadding)//.padding(top = 52.dp)
         ) {
-            if (messageData != null) {
-                if (messageData!!.data.isEmpty()) {
+            if (messagesData != null) {
+                if (messagesData!!.data.isEmpty()) {
                     item {
                         Box(
                             Modifier.fillMaxSize(),
@@ -412,7 +416,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         }
                     }
                 } else {
-                    messageData?.data?.let { list ->
+                    messagesData?.data?.let { list ->
                         items(list.size) { messageIndex ->
                             AnimatedVisibility(
                                 visibleState = MutableTransitionState(
@@ -427,7 +431,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                 exit = slideOutVertically() + fadeOut(),
                             ) {
                                 MessageCard(
-                                    messageData!!.data[messageIndex],
+                                    messagesData!!.data[messageIndex],
                                     navigateToFullMessage = {
                                         activeCardId = it //messageData!!.data[messageIndex].id
                                     }
@@ -437,7 +441,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         }
                     }
                 }
-                Log.d("MessageData", messageData.toString())
+                Log.d("MessageData", messagesData.toString())
             } else {
                 item {
                     Box(
@@ -501,7 +505,18 @@ fun MessageCard(
             modifier = Modifier.padding(4.dp)
         ) {
             Row {
-                Column (modifier = Modifier.weight(1f)) {
+                Image(
+                    painter = painterResource(R.drawable.arcos_logo),
+                    contentDescription = "user profile picture",
+                    modifier = Modifier
+                        .size(48.dp)
+                        .align(Alignment.CenterVertically)
+                )
+                Column (
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically)
+                ) {
                     Text(
                         "From: ${messageInfo.sender}",
                         softWrap = false,
@@ -513,13 +528,22 @@ fun MessageCard(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+                Text(
+                    //text = "12/31/2023\n12:39 PM",
+                    text = getDate(messageInfo.timestamp)+"\n"+ getDateTime(messageInfo.timestamp),
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .align(Alignment.CenterVertically),
+                    textAlign = TextAlign.Center
+                )
                 IconButton(
                     onClick = {
                         if(hapticsEnabled.value) vibrator.vibrate(
                             VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
                         )
                         settingsExpanded = true
-                    }
+                    },
+                    modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
@@ -599,6 +623,7 @@ fun MessageCard(
     }
 }
 
+// TODO make full message card get message data
 @Composable
 fun FullMessageCard(
     apiName: String,
@@ -610,7 +635,7 @@ fun FullMessageCard(
 ) {
     ElevatedCard(
         modifier = modifier.fillMaxSize(),
-        shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp),//RoundedCornerShape(24.dp, ),
+        shape = RoundedCornerShape(24.dp, 24.dp, 0.dp, 0.dp),
         colors = CardDefaults.cardColors(
             MaterialTheme.colorScheme.background,
             MaterialTheme.colorScheme.onBackground
@@ -653,6 +678,11 @@ fun FullMessageCard(
                     )
                 }
             }
+            /*Text(
+                text = getDate(timestamp)+" "+getDateTime(timestamp),
+                modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )*/
             Text(
                 text = "This is a pretty long title for testing things",
                 fontSize = 28.sp,
@@ -714,6 +744,16 @@ suspend fun getMessages(apiName: String, authCode: String, authToken: String): M
     }
 
     return messageData
+}
+
+fun getDate(timestamp: Long): String {
+    val ts = Date(timestamp)
+    return SimpleDateFormat.getDateInstance(SimpleDateFormat.DATE_FIELD).format(ts)//("yyyy/MM/dd hh:mm").format(ts)
+}
+
+fun getDateTime(timestamp: Long): String {
+    val ts = Date(timestamp)
+    return SimpleDateFormat.getTimeInstance(SimpleDateFormat.SHORT).format(ts)
 }
 
 @Preview

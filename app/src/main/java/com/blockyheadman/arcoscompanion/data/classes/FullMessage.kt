@@ -21,7 +21,7 @@ data class FullMessageData(
     @SerializedName("replyingTo")
     val replyingTo: Int?,
     @SerializedName("timestamp")
-    val timestamp: Int,
+    val timestamp: Long,
     @SerializedName("id")
     val id: Int,
     @SerializedName("read")

@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.blockyheadman.arcoscompanion.data.classes.AuthResponse
+import com.blockyheadman.arcoscompanion.data.classes.FullMessage
 import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -76,8 +77,8 @@ class ApiCall {
         return data
     }
 
-    suspend fun getMessage(apiName: String, id: Int, authCode: String, auth: String): MessageList? {
-        var data: MessageList? = null
+    suspend fun getMessage(apiName: String, id: Int, authCode: String, auth: String): FullMessage? {
+        var data: FullMessage? = null
 
         try {
             coroutineScope {
@@ -95,7 +96,7 @@ class ApiCall {
                     )
 
                     Log.d("JSONOutput", json)
-                    //data = Gson().fromJson(json, MessageList::class.java)
+                    data = Gson().fromJson(json, FullMessage::class.java)
                     Log.d("FullMessageOutput", data.toString())
                 }.await()
             }
