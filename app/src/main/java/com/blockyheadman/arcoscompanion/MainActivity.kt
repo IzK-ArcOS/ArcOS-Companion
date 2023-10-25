@@ -147,6 +147,8 @@ fun CompanionApp() {
         else -> systemDarkTheme
     }
 
+    hapticsEnabled = store.getHapticsMode.collectAsState(initial = false)
+    
     var selectedNavBarItem by rememberSaveable { mutableIntStateOf(0) }
 
     var showConnectionLost by rememberSaveable { mutableStateOf(true) }
@@ -156,7 +158,7 @@ fun CompanionApp() {
     apiDao = db.apiSaveDao()
 
     val notificationWorkRequest: WorkRequest =
-        PeriodicWorkRequestBuilder<NotificationWorker>(Duration.ofSeconds(5))
+        PeriodicWorkRequestBuilder<NotificationWorker>(Duration.ofSeconds(1))
             .build()
 
     WorkManager

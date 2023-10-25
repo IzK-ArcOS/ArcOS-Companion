@@ -155,7 +155,7 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                         onClick = {
                                             if(hapticsEnabled.value) vibrator.vibrate(
                                                 VibrationEffect.createPredefined(
-                                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                                    VibrationEffect.EFFECT_CLICK
                                                 )
                                             )
 
@@ -561,7 +561,7 @@ fun MessageCard(
                                 navigateToFullMessage(messageInfo.id)
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        VibrationEffect.EFFECT_CLICK
                                     )
                                 )
 
@@ -579,7 +579,7 @@ fun MessageCard(
                             onClick = {
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        VibrationEffect.EFFECT_CLICK
                                     )
                                 )
                                 Toast.makeText(

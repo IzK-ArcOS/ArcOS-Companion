@@ -119,7 +119,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                         onClick = {
                             if(hapticsEnabled.value) vibrator.vibrate(
                                 VibrationEffect.createPredefined(
-                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    VibrationEffect.EFFECT_CLICK
                                 )
                             )
                             apiTabIndex = 0
@@ -134,7 +134,7 @@ fun ServersPage(externalPadding: PaddingValues) {
                         onClick = {
                             if(hapticsEnabled.value) vibrator.vibrate(
                                 VibrationEffect.createPredefined(
-                                    VibrationEffect.EFFECT_DOUBLE_CLICK
+                                    VibrationEffect.EFFECT_CLICK
                                 )
                             )
                             apiTabIndex = 1
@@ -353,7 +353,7 @@ fun ApiCard(data: ApiSaveData) {
                             onClick = {
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        VibrationEffect.EFFECT_CLICK
                                     )
                                 )
                                 // TODO show api info
@@ -371,7 +371,7 @@ fun ApiCard(data: ApiSaveData) {
                             onClick = {
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        VibrationEffect.EFFECT_CLICK
                                     )
                                 )
                                 runBlocking {
@@ -396,7 +396,7 @@ fun ApiCard(data: ApiSaveData) {
                             onClick = {
                                 if(hapticsEnabled.value) vibrator.vibrate(
                                     VibrationEffect.createPredefined(
-                                        VibrationEffect.EFFECT_DOUBLE_CLICK
+                                        VibrationEffect.EFFECT_CLICK
                                     )
                                 )
                                 runBlocking {
