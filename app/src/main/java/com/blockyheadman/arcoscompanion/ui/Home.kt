@@ -96,7 +96,7 @@ fun HomeApiCard() {
         val cardSwipeState = remember { AnchoredDraggableState(
             0f,
             anchors = DraggableAnchors {
-                0f at 0f//startActionSizePx
+                0f at 0f //startActionSizePx
                 //0.5f at 0f
                 1f at -endActionSizePx
             },
