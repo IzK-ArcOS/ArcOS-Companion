@@ -90,7 +90,7 @@ fun HomeApiCard() {
     ) {
         val density = LocalDensity.current
         val defaultActionSize = 60.dp
-        val startActionSizePx = with(density) { -(defaultActionSize).toPx() }
+        //val startActionSizePx = with(density) { -(defaultActionSize).toPx() }
         val endActionSizePx = with(density) { (defaultActionSize).toPx() }
 
         val cardSwipeState = remember { AnchoredDraggableState(
