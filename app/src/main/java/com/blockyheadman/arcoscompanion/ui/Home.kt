@@ -97,7 +97,7 @@ fun HomeApiCard() {
             0f,
             anchors = DraggableAnchors {
                 0f at 0f //startActionSizePx
-                //0.5f at 0f
+                // 0.5f at 0f
                 1f at -endActionSizePx
             },
             positionalThreshold = { distance: Float -> distance * 0.5f },
