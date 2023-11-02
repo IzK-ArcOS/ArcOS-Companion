@@ -229,7 +229,7 @@ fun testNotification(context: Context, id: Int) {
     )
 
     val notification = NotificationCompat.Builder(context, "ArcMailIncoming")
-        .setSmallIcon(R.drawable.arcos_logo)
+        .setSmallIcon(R.drawable.companion_logo)
         .setContentTitle("Izaak Kuipers")
         .setContentText("1 new message")
         .setPriority(NotificationManagerCompat.IMPORTANCE_HIGH)

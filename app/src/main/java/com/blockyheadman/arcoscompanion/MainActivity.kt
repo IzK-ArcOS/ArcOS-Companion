@@ -13,7 +13,14 @@ import android.os.Vibrator
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -148,8 +155,6 @@ fun CompanionApp() {
     }
 
     hapticsEnabled = store.getHapticsMode.collectAsState(initial = false)
-    
-    var selectedNavBarItem by rememberSaveable { mutableIntStateOf(0) }
 
     var showConnectionLost by rememberSaveable { mutableStateOf(true) }
     var connectionAvailable by rememberSaveable { mutableStateOf(true) }
@@ -208,10 +213,13 @@ fun CompanionApp() {
     }
 
     ArcOSCompanionTheme(darkTheme, dynamicColor.value) {
+
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
+            var selectedNavBarItem by rememberSaveable { mutableIntStateOf(0) }
+            var previousSelectedNavBarItem by rememberSaveable { mutableIntStateOf(0) }
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -230,7 +238,7 @@ fun CompanionApp() {
                         },
                         navigationIcon = {
                             Image(
-                                painter = painterResource(R.drawable.arcos_logo),
+                                painter = painterResource(R.drawable.companion_logo),
                                 contentDescription = "ArcOS logo",
                                 modifier = Modifier.size(48.dp)
                             )
@@ -244,6 +252,7 @@ fun CompanionApp() {
                             NavigationBarItem(
                                 selected = selectedNavBarItem == index,
                                 onClick = {
+                                    previousSelectedNavBarItem = selectedNavBarItem
                                     selectedNavBarItem = index
                                     if(hapticsEnabled.value) vibrator.vibrate(
                                         VibrationEffect.createPredefined(
@@ -333,20 +342,38 @@ fun CompanionApp() {
                     }
                 }
 
-                when (selectedNavBarItem) {
-                    0 -> { HomePage(innerPadding) }
-                    1 -> { ServersPage(innerPadding) }
-                    2 -> { MessagesPage(innerPadding) }
-                    3 -> { SettingsPage(innerPadding) }
-                    else -> {
-                        Box (
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "This page shouldn't exist.\nPlease report this issue.",
-                                textAlign = TextAlign.Center
-                            )
+                AnimatedContent(
+                    targetState = selectedNavBarItem,
+                    transitionSpec = {
+                        if (targetState > previousSelectedNavBarItem) {
+                            Log.d("MainActivity", "targetState ($targetState) is a larger # than the new # ($selectedNavBarItem)")
+                            (slideInHorizontally { fullWidth -> fullWidth } + fadeIn()).togetherWith(
+                                slideOutHorizontally { fullWidth -> -fullWidth } + fadeOut())
+                        } else {
+                            Log.d("MainActivity", "targetState ($targetState) is a smaller # than the new # ($selectedNavBarItem)")
+                            (slideInHorizontally { fullWidth -> -fullWidth } + fadeIn()).togetherWith(
+                                slideOutHorizontally { fullWidth -> fullWidth } + fadeOut())
+                        }.using(
+                            SizeTransform(clip = false)
+                        )
+                    },
+                    label = "Animated main items"
+                ) { selectedItem ->
+                    when (selectedItem) {
+                        0 -> { HomePage(innerPadding) }
+                        1 -> { ServersPage(innerPadding) }
+                        2 -> { MessagesPage(innerPadding) }
+                        3 -> { SettingsPage(innerPadding) }
+                        else -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "This page shouldn't exist.\nPlease report this issue.",
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 }

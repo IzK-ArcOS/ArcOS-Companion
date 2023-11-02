@@ -80,6 +80,7 @@ import androidx.core.content.ContextCompat
 import com.blockyheadman.arcoscompanion.NotificationIDs
 import com.blockyheadman.arcoscompanion.R
 import com.blockyheadman.arcoscompanion.apis
+import com.blockyheadman.arcoscompanion.data.classes.FullMessage
 import com.blockyheadman.arcoscompanion.data.classes.MessageData
 import com.blockyheadman.arcoscompanion.data.classes.MessageList
 import com.blockyheadman.arcoscompanion.data.network.ApiCall
@@ -96,6 +97,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Date
+
+//TODO make getting messages on empty inboxes work (because it broke again for some reason???)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -731,6 +734,36 @@ suspend fun getMessages(apiName: String, authCode: String, authToken: String): M
             launch(Dispatchers.IO) {
                 messageData = messageRequest.getMessages(
                     apiName,
+                    authCode,
+                    authToken
+                )
+            }
+        }
+        if (messageRequest.errorMessage.isEmpty()) {
+            Log.d("MessageData", messageData.toString())
+        } else {
+            Log.e("MessageDataError", messageRequest.errorMessage)
+        }
+    }
+
+    return messageData
+}
+
+suspend fun getMessage(
+    apiName: String,
+    authCode: String,
+    messageId: Int,
+    authToken: String
+): FullMessage? {
+    val messageRequest = ApiCall()
+    var messageData: FullMessage? = null
+
+    coroutineScope {
+        runBlocking {
+            launch(Dispatchers.IO) {
+                messageData = messageRequest.getMessage(
+                    apiName,
+                    messageId,
                     authCode,
                     authToken
                 )
