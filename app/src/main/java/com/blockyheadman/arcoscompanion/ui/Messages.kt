@@ -98,7 +98,6 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Date
 
-//TODO make getting messages on empty inboxes work (because it broke again for some reason???)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,6 +162,15 @@ fun MessagesPage(externalPadding: PaddingValues) {
                                             )
 
                                             apiTabIndex = apisSorted.indexOf(api)
+                                            Log.d(
+                                                "ApiTab",
+                                                "Api list size is ${apisSorted.size}"
+                                            )
+                                            Log.d(
+                                                "ApiTab",
+                                                "Tab $apiTabIndex was clicked"
+                                            )
+
                                             val scope = CoroutineScope(Job())
                                             scope.launch {
                                                 // TODO Make this a function
@@ -350,7 +358,6 @@ fun MessagesPage(externalPadding: PaddingValues) {
             }
 
         }
-        //contentAlignment = Alignment.Center
     ) { innerPadding ->
         //val mainContext = LocalContext.current
 
@@ -419,7 +426,9 @@ fun MessagesPage(externalPadding: PaddingValues) {
                         }
                     }
                 } else {
-                    messagesData?.data?.let { list ->
+                    Log.d("LazyMessageCards","messagesData:${messagesData!!.data.size}")
+                    messagesData?.data!!.let { list ->
+                        Log.d("LazyMessageCards","list:${list.size}")
                         items(list.size) { messageIndex ->
                             AnimatedVisibility(
                                 visibleState = MutableTransitionState(
@@ -445,15 +454,15 @@ fun MessagesPage(externalPadding: PaddingValues) {
                     }
                 }
                 Log.d("MessageData", messagesData.toString())
-            } else {
+            } else { // TODO Fix crash due to this thing for some odd reason
                 item {
                     Box(
                         Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (apisSorted.isNotEmpty()) "Loading your inbox.."
-                            else "Add an API to view messages.",
+                            text = /*if (apisSorted.isNotEmpty()) "Loading your inbox.."
+                            else "Add an API to view messages."*/"...",
                             textAlign = TextAlign.Center
                         )
                     }

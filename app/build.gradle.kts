@@ -94,7 +94,7 @@ dependencies {
     //implementation("com.google.protobuf:protobuf-kotlin-lite:$protobufVersion") // Added for Proto DataStore
     //implementation("com.google.protobuf:protoc:$protobufVersion") // Added for Proto DataStore
     implementation("androidx.activity:activity-ktx:1.8.0") // Added for permissions
-    implementation("androidx.fragment:fragment-ktx:1.6.1") // Added for permissions
+    implementation("androidx.fragment:fragment-ktx:1.6.2") // Added for permissions
     implementation("com.squareup.retrofit2:retrofit:2.9.0") // Added for REST API
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // Added for JSON conversion
     implementation("androidx.room:room-runtime:$roomVersion") // Added for Room
